@@ -5,11 +5,11 @@ import { Notebook, LogOut, User } from "lucide-react"
 function Navbar(){
     const navigate = useNavigate();
      return (
-       <nav className="bg-white shadow-sm">
+       <nav className="bg-white shadow-sm mr-5">
          <div clasName="container mx-auto px-4">
            <div className=" flex justify-between items-center h-16">
-             <Link to="/" className="flex items-center space-x-2">
-               <Notebook className="h-8 w-8 text-indigo-600" />
+             <Link to="/" className="flex items-center space-x-1">
+               <Notebook className="h-8 w-8 text-indigo-600 ml-6" />
                <span className="text-x1 font-semibold text-gray-900">
                  QuickNotes
                </span>
