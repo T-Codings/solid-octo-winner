@@ -31,7 +31,7 @@ function Landing() {
           {/* ✅ Center the buttons */}
           <div className="flex flex-col md:flex-row items-center justify-center gap-4">
             <Link
-              to="signup"
+              to="/signup"
               className="inline-flex items-center justify-center 
               px-6 py-3 bg-indigo-600 text-white font-medium
                rounded-lg hover:bg-indigo-700 transition-colors"
@@ -40,7 +40,7 @@ function Landing() {
             </Link>
 
             <Link
-              to="login"
+              to="/login"
               className="inline-flex items-center justify-center
                px-6 py-3 bg-white text-indigo-600 font-medium 
                rounded-lg hover:bg-indigo-50 transition-colors"
@@ -50,10 +50,10 @@ function Landing() {
           </div>
           <div
             className="grid md:grid-cols-3 gap-8
-          max-w-5x1 mx-auto mt-7 p-6"
+          max-w-5xl mx-auto mt-7 p-6"
           >
             <div
-              className="bg-white p-6 rounded-x1 
+              className="bg-white p-6 rounded-xl 
             shadow-sm border border-gray-100"
             >
               <div>
@@ -78,7 +78,7 @@ function Landing() {
                   Secure & Private
                 </h3>
                 <p className="text-gray-600">
-                  Your notes are protected with enterprice -grade
+                  Your notes are protected with enterprice-grade
                   security and encyption.
                 </p>
               </div>

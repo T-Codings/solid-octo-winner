@@ -3,15 +3,53 @@
 
 import React, { useState } from "react";
 import { Notebook } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { useAuth } from "../context/AuthContext";
 
 function Signup() {
   const [email, setEmail] = useState();
   const [password, setPassword] = useState();
-  const[passwordConfirmed, setPasswordConfirmed] = useState()
+  const [passwordConfirm, setPasswordConfirm] = useState();
+  const [loading, setLoading] = useState();
+  const [error, setError] = useState();
+
+  const {signup} =useAuth();
+  const navigate = useNavigate();
+
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if(!email || !password || !passwordConfirm){
+      return setError("Please fill in all fields")
+    }
+
+    if (password !== passwordConfirm) {
+      return setError("Passwords do not match");
+    }
+
+  
+    if (password.length < 6) {
+      return setError("Password must not be less than 6 characters");
+    }
+
+    try {
+      setLoading(true);
+      await signup(email, password);
+      navigate('/dashboard');
+    } catch (err) {
+      setError('Failed to create account: ' +(err.message || 'Please try again'))
+    } finally {
+      setLoading(false);
+    }
+  }
+
+
+
 
   return (
-    <div className="max-w-md mx-auto mt-6 p-8">
+    <div className="max-w-md mx-auto mt-12 p-8">
       <div className="bg-white rounded-lg shadow-md">
         <div className="flex flex-col items-center mb-6 ">
           <Notebook className="h-12 w-12 text-indigo-600 mb-2 mt-6" />
@@ -22,7 +60,16 @@ function Signup() {
           <p className="text-gray-600">Start taking your notes today</p>
         </div>
 
-        <form class="max-w-[90%] mx-auto">
+        {
+          error && (
+            <div className="bg-red-50 text-red-700 p-3
+             rounded-md mb-4 text-sm">
+              {error}{""}
+          </div>)
+        }
+
+        <form onSubmit={handleSubmit}
+        class="max-w-[90%] mx-auto">
           <div className="mb-4">
             <label className="block text-sm font-meduim text-gray-700 mb-1">
               Email
@@ -36,7 +83,7 @@ function Signup() {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full border px-3 py-2 border border-gray-300
                 rounded-md focus:outline-none focus:ring-none
-                focus:ring-none focus:ring-offset-2
+                focus:ring-none focus:ring-offset-2 bg-indigo-50
                 disabled:opacity-50 disabled:cursor-not-allowed"
               required
             />
@@ -54,36 +101,41 @@ function Signup() {
               className="w-full border px-3 py-2 border border-gray-300
                 rounded-md focus:outline-none focus:ring-none
                 focus:ring-none focus:ring-offset-2
+                bg-indigo-50 
                 disabled:opacity-50 disabled:cursor-not-allowed"
               required
             />
 
-              <div className="mt-4">
-            <label html for="password-confirmed" className="block mb-1">Confirm Password</label>
-            <input
-              id="password-confirmed"
-              type="password"
-              value={passwordConfirmed}
-              placeholder="************"
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full border px-3 py-2 border border-gray-300
+            <div className="mb-6 mt-6">
+              <label html for="password-confirm" className="block mb-1">
+                Confirm Password
+              </label>
+              <input
+                id="password-confirm"
+                type="password"
+                value={passwordConfirm}
+                placeholder="************"
+                onChange={(e) => setPasswordConfirm(e.target.value)}
+                className="w-full border px-3 py-2 border border-gray-300
                 rounded-md focus:outline-none focus:ring-none
                 focus:ring-none focus:ring-offset-2
+                bg-indigo-50
                 disabled:opacity-50 disabled:cursor-not-allowed"
-              required
-            />
+                required
+              />
             </div>
-
-
           </div>
 
           <button
             className="w-full bg-indigo-600 text-white
                py-2 rounded-md hover:bg-indigo-700 transition-colors
-               focus:outline-none focus:ring-2"
+               focus:outline-none focus:ring-2 focus:ring-indigo-500
+               focus:ring-offset-2 disabled:opacity-50
+               disabled:cursor-not-allowed mt-4"
             type="submit"
+            disabled={loading}
           >
-            Create Account
+            {loading ? "Creating Account..." : "Sign Up"}
           </button>
         </form>
 
