@@ -1,11 +1,14 @@
-
+import NoteCard from "../component/NoteCard"
+import NoteForm from "../component/NoteForm"
 
 function Dashboard() {
-    return(
-        <div>
-        <h1>This is my dashboard</h1>
-        </div>
-    )
+    return (
+      <>
+        <NoteForm />
+        <NoteCard />
+        
+      </>
+    );
 }
 
 export default Dashboard

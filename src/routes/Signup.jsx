@@ -49,7 +49,7 @@ function Signup() {
 
 
   return (
-    <div className="max-w-md mx-auto mt-12 p-8">
+    <div className="max-w-md mx-auto mt-12 mb-2 p-8">
       <div className="bg-white rounded-lg shadow-md">
         <div className="flex flex-col items-center mb-6 ">
           <Notebook className="h-12 w-12 text-indigo-600 mb-2 mt-6" />
@@ -139,7 +139,8 @@ function Signup() {
           </button>
         </form>
 
-        <div className="h-10 text-center mt-4 text-gray-600 text-sm">
+        <div className="h-12 text-center mt-6
+         text-gray-600 text-sm">
           <p>
             Don't have an account yet?
             <Link className="text-indigo-600 ml-1" to="/login">
