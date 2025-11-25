@@ -11,9 +11,9 @@ function NoteCard({ note }) {
     if (!timestamp) return "Just Now";
 
     const date = timestamp.toDate();
-    return new Intl.DateTimeFormat("en-CMR", {
-      day: "numeric",
+    return new Intl.DateTimeFormat("en-US", {
       month: "short",
+      day: "numeric",
       year: "numeric",
       hour: "numeric",
       minute: "numeric",

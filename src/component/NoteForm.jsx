@@ -1,3 +1,4 @@
+// NoteForm.js
 import React, { useState } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebaseconfig";
