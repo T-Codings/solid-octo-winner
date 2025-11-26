@@ -1,11 +1,11 @@
-import Landing from "./routes/Landing";
+import Landing from "./pages/Home";
 import { Routes, Route, Navigate } from "react-router-dom";
-import Signup from "./routes/Signup";
-import Login from "./routes/Login";
+import Signup from "./pages/Signup";
+import Login from "./pages/Login";
 import Navbar from "./component/Navbar";
 import { useAuth } from "./context/AuthContext";
 import ProtectedRoute from "./component/ProtectedRoute";
-import Dashboard from "./routes/Dashboard";
+import Dashboard from "./pages/Dashboard";
 
 function App() {
   const { loading, currentUser } = useAuth();
