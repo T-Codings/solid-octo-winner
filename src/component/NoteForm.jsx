@@ -1,7 +1,7 @@
 // NoteForm.js
 import React, { useState } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../firebaseconfig";
+import { db } from "../firebaseConfig";
 import { useAuth } from "../context/AuthContext";
 import { PenLine } from "lucide-react";
 

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { doc, deleteDoc } from "firebase/firestore";
-import { db } from "../firebaseconfig";
+import { db } from "../firebaseConfig";
 import { Trash } from "lucide-react";
 
 function NoteCard({ note }) {

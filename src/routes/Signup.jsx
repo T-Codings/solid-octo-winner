@@ -1,11 +1,8 @@
 
-
-
 import React, { useState } from "react";
 import { Notebook } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
-
 function Signup() {
   const [email, setEmail] = useState();
   const [password, setPassword] = useState();
