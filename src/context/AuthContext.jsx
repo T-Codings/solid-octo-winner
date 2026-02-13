@@ -1,4 +1,3 @@
-// src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import {
   createUserWithEmailAndPassword,
@@ -6,37 +5,72 @@ import {
   signOut,
   onAuthStateChanged,
 } from "firebase/auth";
+
 import { auth } from "../firebaseConfig";
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
+// ✅ Hook (ONLY ONCE)
+export function useAuth() {
+  return useContext(AuthContext);
+}
+
+// Provider component
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const signup = (email, password) =>
-    createUserWithEmailAndPassword(auth, email, password);
+  // Signup
+  async function signup(email, password) {
+    setError("");
+    try {
+      return await createUserWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      setError(err?.message || "Signup failed");
+      throw err;
+    }
+  }
 
-  const login = (email, password) =>
-    signInWithEmailAndPassword(auth, email, password);
+  // Login
+  async function login(email, password) {
+    setError("");
+    try {
+      return await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      setError(err?.message || "Login failed");
+      throw err;
+    }
+  }
 
-  const logout = () => signOut(auth);
+  // Logout
+  async function logout() {
+    setError("");
+    try {
+      return await signOut(auth);
+    } catch (err) {
+      setError(err?.message || "Logout failed");
+      throw err;
+    }
+  }
 
+  // Track user state
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
+      setCurrentUser(user || null);
       setLoading(false);
     });
-    return unsub;
+    return () => unsub();
   }, []);
 
-  return (
-    <AuthContext.Provider
-      value={{ currentUser, signup, login, logout, loading }}
-    >
-      {!loading && children}
-    </AuthContext.Provider>
-  );
-}
+  const value = {
+    currentUser,
+    logout,
+    signup,
+    login,
+    error,
+    loading,
+  };
 
-export const useAuth = () => useContext(AuthContext);
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}

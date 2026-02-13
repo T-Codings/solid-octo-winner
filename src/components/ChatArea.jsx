@@ -1,5 +1,5 @@
-// utils/updateLastMessage.js
-import { addMessageToChat } from "../utils/addMessageToChat";
+
+import { addMessageToChat } from "./utils/addMessageToChat";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 

@@ -1,11 +1,9 @@
-// src/routes/Signup.jsx
+
+
+
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { db } from "../firebaseConfig";
-import { doc, setDoc } from "firebase/firestore";
-import ChatIcon from "../assets/chaticon.png";
-import { Eye, EyeOff } from "lucide-react";
 
 function Signup() {
   const { signup } = useAuth();
