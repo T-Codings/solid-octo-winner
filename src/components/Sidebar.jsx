@@ -1,101 +1,63 @@
 import React, { useEffect, useState } from "react";
-import { collection, onSnapshot, query } from "firebase/firestore";
+import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 import { useAuth } from "../context/AuthContext";
-import { updateLastMessage } from "../utils/updateLastMessage";
-import { addMessageToChat } from "../utils/addMessageToChat";
 import ContactList from "./ContactList";
-
 
 function Sidebar({ onSelectContact }) {
   const { currentUser } = useAuth();
   const [contacts, setContacts] = useState([]);
+  const [loadingContacts, setLoadingContacts] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!currentUser) return;
 
-    {
-      ContactList.lastMessage && (
-        <div className="text-sm text-gray-600 truncate">
-          {ContactList.lastMessage}
-        </div>
-      );
-    }
+    setLoadingContacts(true);
+    setError("");
 
-    const q = query(collection(db, "sidebarContacts"));
+    // ✅ Correct path: contacts/{uid}/list/{contactUid}
+    const ref = collection(db, "contacts", currentUser.uid, "list");
 
-    const unsub = onSnapshot(q, (snapshot) => {
-      let list = [];
+    const unsub = onSnapshot(
+      ref,
+      (snap) => {
+        const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-      snapshot.forEach((doc) => {
-        if (doc.id !== currentUser.uid) {
-          list.push({
-            id: doc.id,
-            ...doc.data(),
-          });
-        }
-      });
+        // ✅ safe sort (newest first)
+        rows.sort((a, b) => (b.updatedAtMs || 0) - (a.updatedAtMs || 0));
 
-      list.sort((a, b) => {
-        if (!a.lastMessageTime) return 1;
-        if (!b.lastMessageTime) return -1;
-        return b.lastMessageTime.seconds - a.lastMessageTime.seconds;
-      });
-
-      setContacts(list);
-    });
+        setContacts(rows);
+        setLoadingContacts(false);
+      },
+      (err) => {
+        setError(err?.message || "Failed to load contacts.");
+        setLoadingContacts(false);
+      }
+    );
 
     return () => unsub();
   }, [currentUser]);
 
   return (
-    <div className="w-80 border-r border-gray-300 h-screen overflow-y-auto bg-white">
-      <h2 className="p-4 text-xl font-semibold border-b bg-indigo-600 text-white">
+    <div className="w-80 border-r border-white/10 h-screen overflow-y-auto bg-slate-950/20 backdrop-blur">
+      <h2 className="p-4 text-xl font-extrabold border-b border-white/10 bg-slate-950/30 text-white">
         Contacts
       </h2>
 
-      {contacts.length === 0 && (
-        <p className="p-4 text-gray-500 text-center">No contacts found</p>
+      {loadingContacts && (
+        <p className="p-4 text-slate-300 text-center">Loading...</p>
       )}
 
-      <div>
-        {contacts.map((contact) => (
-          <div
-            key={contact.id}
-            onClick={() => onSelectContact(contact)}
-            className="flex items-center p-3 hover:bg-gray-100 cursor-pointer border-b"
-          >
-            <img
-              src={contact.photoURL ? contact.photoURL : "/default-avatar.png"}
-              alt="profile"
-              className="w-14 h-14 rounded-full object-cover border"
-            />
+      {!loadingContacts && error && (
+        <p className="p-4 text-red-200 text-center">{error}</p>
+      )}
 
-            <div className="ml-3 w-full">
-              <div className="text-lg font-semibold">{contact.name}</div>
+      {!loadingContacts && !error && contacts.length === 0 && (
+        <p className="p-4 text-slate-300 text-center">No contacts found</p>
+      )}
 
-              {/* Show last message ONLY if it exists */}
-              {contact.lastMessage && (
-                <div className="text-sm text-gray-600 truncate">
-                  {contact.lastMessage}
-                </div>
-              )}
-
-              {/* Last Message Time */}
-              {contact.lastMessageTime && (
-                <div className="text-xs text-gray-400">
-                  {new Date(
-                    contact.lastMessageTime.seconds * 1000
-                  ).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+      <ContactList contacts={contacts} onSelectContact={onSelectContact} />
     </div>
   );
 }

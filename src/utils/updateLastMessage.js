@@ -2,29 +2,47 @@
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 
-export async function updateLastMessage(sender, receiver, text) {
-  const timestamp = serverTimestamp();
+function safeName(u) {
+  return (
+    u?.fullName ||
+    u?.name ||
+    [u?.firstName, u?.lastName].filter(Boolean).join(" ") ||
+    (u?.email ? u.email.split("@")[0] : "") ||
+    "User"
+  );
+}
 
+export async function updateLastMessage(sender, receiver, text) {
+  const nowMs = Date.now();
+
+  // ✅ sender's sidebar entry: contacts/{sender}/list/{receiver}
   await setDoc(
-    doc(db, "sidebarContacts", sender.uid),
+    doc(db, "contacts", sender.uid, "list", receiver.uid),
     {
-      uid: sender.uid,
-      name: sender.name || "",
-      photoURL: sender.photoURL || null,
+      uid: receiver.uid,
+      fullName: safeName(receiver),
+      photoURL: receiver.photoURL || "",
       lastMessage: text || "",
-      lastMessageTime: timestamp,
+      updatedAt: serverTimestamp(),
+      updatedAtMs: nowMs,
+      lastMessageAt: serverTimestamp(),
+      lastMessageAtMs: nowMs,
     },
     { merge: true }
   );
 
+  // ✅ receiver's sidebar entry: contacts/{receiver}/list/{sender}
   await setDoc(
-    doc(db, "sidebarContacts", receiver.uid),
+    doc(db, "contacts", receiver.uid, "list", sender.uid),
     {
-      uid: receiver.uid,
-      name: receiver.name || "",
-      photoURL: receiver.photoURL || null,
+      uid: sender.uid,
+      fullName: safeName(sender),
+      photoURL: sender.photoURL || "",
       lastMessage: text || "",
-      lastMessageTime: timestamp,
+      updatedAt: serverTimestamp(),
+      updatedAtMs: nowMs,
+      lastMessageAt: serverTimestamp(),
+      lastMessageAtMs: nowMs,
     },
     { merge: true }
   );

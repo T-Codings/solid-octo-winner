@@ -1,4 +1,4 @@
-// src/routes/Landing.jsx (or wherever your Landing is)
+// src/routes/Landing.jsx
 import React from "react";
 import { Link } from "react-router-dom";
 import {
@@ -10,6 +10,8 @@ import {
   Zap,
   ArrowRight,
   ShieldCheck,
+  Sparkles,
+  CheckCircle2,
 } from "lucide-react";
 import ChatIcon from "../assets/ChatIcon.png";
 
@@ -47,6 +49,21 @@ export default function Landing() {
     },
   ];
 
+  const steps = [
+    {
+      title: "Create an account",
+      desc: "Sign up in seconds and secure your profile.",
+    },
+    {
+      title: "Add your contacts",
+      desc: "Find friends and start chatting instantly.",
+    },
+    {
+      title: "Chat in real-time",
+      desc: "Messages sync smoothly across your devices.",
+    },
+  ];
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Background like SignUp */}
@@ -57,125 +74,100 @@ export default function Landing() {
         <div className="min-h-screen flex items-center justify-center px-4 py-12">
           <div className="w-full max-w-6xl">
             {/* Header */}
-            <div className="text-center mb-10">
-              <div className="mx-auto w-14 h-14 rounded-2xl bg-white/10 backdrop-blur border border-white/10 flex items-center justify-center shadow-lg overflow-hidden">
-                <img src={ChatIcon} alt="Chat Icon" className="w-10 h-10" />
+            <div className="text-center mb-12">
+              <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/10 backdrop-blur border border-white/10 flex items-center justify-center shadow-lg overflow-hidden">
+                <img src={ChatIcon} alt="Chat Icon" className="w-12 h-12 sm:w-14 sm:h-14" />
               </div>
 
-              <h1 className="mt-5 text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight">
+              <h1 className="mt-6 text-4xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight">
                 Fast, Simple & Sweet Messaging
               </h1>
 
-              <p className="mt-3 text-sm sm:text-base text-slate-300 max-w-2xl mx-auto">
+              <p className="mt-4 text-lg sm:text-xl md:text-2xl text-slate-200/90 max-w-3xl mx-auto leading-relaxed">
                 Stay connected with smooth real-time chatting. Beautiful design,
-                effortless communication, and private conversations — all in one place.
+                effortless communication, and private conversations — all in one
+                place.
               </p>
 
               {/* CTAs */}
-              <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link
                   to="/signup"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-semibold text-white bg-gradient-to-r from-emerald-500 via-cyan-500 to-indigo-600 shadow-lg shadow-emerald-500/10 hover:opacity-95 active:scale-[0.99] transition"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl px-7 py-4 text-base sm:text-lg font-semibold text-white bg-gradient-to-r from-emerald-500 via-cyan-500 to-indigo-600 shadow-lg shadow-emerald-500/10 hover:opacity-95 active:scale-[0.99] transition"
                 >
-                  Get Started for Free <ArrowRight className="w-4 h-4" />
+                  Get Started for Free <ArrowRight className="w-5 h-5" />
                 </Link>
 
                 <Link
                   to="/login"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-semibold text-white bg-white/10 border border-white/10 backdrop-blur hover:bg-white/15 transition"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl px-7 py-4 text-base sm:text-lg font-semibold text-white bg-white/10 border border-white/10 backdrop-blur hover:bg-white/15 transition"
                 >
-                  Sign In <Lock className="w-4 h-4" />
+                  Sign In <Lock className="w-5 h-5" />
                 </Link>
               </div>
 
-              {/* Small trust line */}
-              <div className="mt-4 text-xs text-slate-400 flex items-center justify-center gap-2">
-                <ShieldCheck className="w-4 h-4" />
-                No ads • Clean UI • Your conversations stay yours
+              {/* Quick trust row (restored) */}
+            </div>
+
+            {/* Main glass card (restored glass + border) */}
+            <div className="rounded-2xl p-6 sm:p-10">
+              <div className="flex flex-col items-center text-center">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white">
+                  Why you’ll love it
+                </h2>
+                <p className="mt-2 text-base sm:text-lg md:text-xl text-slate-200/85 max-w-3xl leading-relaxed">
+                  Everything you need to chat confidently — fast and simple.
+                </p>
               </div>
             </div>
 
-            {/* Main glass card */}
-            <div className="rounded-2xl border border-white/10 bg-white/10 backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.35)] p-6 sm:p-8">
-              <div className="flex items-center justify-between gap-4 mb-6">
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-white">
-                    Why you’ll love it
-                  </h2>
-                  <p className="text-sm text-slate-300 mt-1">
-                    Everything you need to chat confidently — fast and simple.
-                  </p>
-                </div>
+            {/* Features grid */}
+            <div className="grid grid-cols-1 gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {features.map((feature, idx) => (
+                <div
+                  key={idx}
+                  className="group rounded-2xl border border-white/10 bg-slate-950/30 hover:bg-slate-950/40 transition p-6 sm:p-7"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center group-hover:bg-white/15 transition">
+                      <feature.icon className="w-6 h-6 sm:w-7 sm:h-7 text-slate-100" />
+                    </div>
 
-                <div className="hidden md:flex items-center gap-2 text-xs text-slate-300">
-                  <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">
-                    Real-time
-                  </span>
-                  <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">
-                    Secure
-                  </span>
-                  <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">
-                    Multi-device
-                  </span>
+                    <div className="min-w-0">
+                      <h3 className="text-lg sm:text-xl font-semibold text-white">
+                        {feature.title}
+                      </h3>
+                      <p className="mt-2 text-base sm:text-lg text-slate-200/80 leading-relaxed">
+                        {feature.desc}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ))}
+            </div>
 
-              {/* Features grid */}
-              <div className="grid gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {features.map((feature, idx) => (
-                  <div
-                    key={idx}
-                    className="group rounded-2xl border border-white/10 bg-slate-950/30 hover:bg-slate-950/40 transition p-5"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="shrink-0 w-11 h-11 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center group-hover:bg-white/15 transition">
-                        <feature.icon className="w-5 h-5 text-slate-100" />
+            {/* How it works (restored) */}
+            <div className="mt-10 grid grid-cols-1 gap-5 lg:grid-cols-3">
+              {steps.map((s, i) => (
+                <div
+                  key={i}
+                  className="rounded-2xl border border-white/10 bg-white/5 p-6 sm:p-7"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-white font-extrabold text-lg sm:text-xl">
+                      {i + 1}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-white font-semibold text-lg sm:text-xl">
+                        {s.title}
                       </div>
-
-                      <div className="min-w-0">
-                        <h3 className="text-base font-semibold text-white">
-                          {feature.title}
-                        </h3>
-                        <p className="mt-1 text-sm text-slate-300">
-                          {feature.desc}
-                        </p>
+                      <div className="mt-1 text-base sm:text-lg text-slate-200/80 leading-relaxed">
+                        {s.desc}
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-
-              {/* Bottom CTA */}
-              <div className="mt-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 p-5">
-                <div className="text-center md:text-left">
-                  <p className="text-white font-semibold">
-                    Ready to start chatting?
-                  </p>
-                  <p className="text-sm text-slate-300">
-                    Create an account in seconds and continue.
-                  </p>
                 </div>
-
-                <div className="flex w-full md:w-auto gap-3">
-                  <Link
-                    to="/signup"
-                    className="flex-1 md:flex-none inline-flex items-center justify-center rounded-xl px-5 py-3 font-semibold text-white bg-gradient-to-r from-emerald-500 via-cyan-500 to-indigo-600 shadow-lg shadow-emerald-500/10 hover:opacity-95 active:scale-[0.99] transition"
-                  >
-                    Sign up
-                  </Link>
-                  <Link
-                    to="/login"
-                    className="flex-1 md:flex-none inline-flex items-center justify-center rounded-xl px-5 py-3 font-semibold text-white bg-white/10 border border-white/10 hover:bg-white/15 transition"
-                  >
-                    Login
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer tiny */}
-            <div className="mt-8 text-center text-xs text-slate-500">
-              © {new Date().getFullYear()} • Built with React + Firebase
+              ))}
             </div>
           </div>
         </div>

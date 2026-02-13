@@ -1,30 +1,48 @@
-// src/components/ContactsList.jsx
+// src/components/ContactList.jsx
 import React from "react";
+import DefaultAvatar from "../assets/default-profile.png"; // make sure this exists
 
+function fmtTime(ms) {
+  if (!ms) return "";
+  try {
+    return new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return "";
+  }
+}
 
-function ContactList({ contacts = [], onSelectContact }) {
+export default function ContactList({ contacts = [], onSelectContact }) {
   return (
-    <div className="w-64 bg-white border-r border-gray-200 h-full overflow-y-auto">
-      {contacts.map((contact) => {
-        const uid = contact.uid || contact.id;
-        const name = contact.fullName || contact.name || "Unknown";
+    <div className="divide-y divide-white/10">
+      {contacts.map((c) => {
+        const uid = c.uid || c.id;
+        const name = c.fullName || c.name || "Unknown";
+        const lastTimeMs = c.lastMessageAtMs || c.updatedAtMs || 0;
 
         return (
           <div
             key={uid}
-            onClick={() => onSelectContact?.({ ...contact, uid })}
-            className="flex items-center p-3 cursor-pointer hover:bg-gray-100 transition"
+            onClick={() => onSelectContact?.({ ...c, uid, id: c.id || uid })}
+            className="flex items-center gap-3 p-3 cursor-pointer hover:bg-white/5 transition"
           >
             <img
-              src={contact.photoURL || DefaultAvatar}
+              src={c.photoURL || DefaultAvatar}
               alt={name}
-              className="w-10 h-10 rounded-full object-cover mr-3"
+              className="w-12 h-12 rounded-full object-cover border border-white/10"
             />
 
-            <div className="min-w-0">
-              <h3 className="text-sm font-semibold truncate">{name}</h3>
-              <p className="text-xs text-gray-500 truncate">
-                {contact.lastMessage || "No messages yet"}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-semibold text-white truncate">
+                  {name}
+                </h3>
+                <span className="text-xs text-slate-300 shrink-0">
+                  {fmtTime(lastTimeMs)}
+                </span>
+              </div>
+
+              <p className="text-xs text-slate-300 truncate">
+                {c.lastMessage ? c.lastMessage : "No messages yet"}
               </p>
             </div>
           </div>
@@ -32,11 +50,8 @@ function ContactList({ contacts = [], onSelectContact }) {
       })}
 
       {contacts.length === 0 && (
-        <p className="p-4 text-gray-500 text-center">No contacts</p>
+        <p className="p-4 text-slate-300 text-center">No contacts</p>
       )}
     </div>
   );
 }
-
-export default ContactList;
-

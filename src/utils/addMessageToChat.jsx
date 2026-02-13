@@ -12,22 +12,29 @@ export async function addMessageToChat(currentUser, otherUser, text) {
   if (!cleanText) return;
 
   const chatId = getChatId(currentUser.uid, otherUser.uid);
-  const messagesRef = collection(db, "chats", chatId, "messages");
 
+  // 1) add message
+  const messagesRef = collection(db, "chats", chatId, "messages");
   await addDoc(messagesRef, {
     text: cleanText,
-    senderUid: currentUser.uid,
-    timestamp: serverTimestamp(),
+    senderId: currentUser.uid, // ✅ match your rules (senderId)
+    createdAt: serverTimestamp(),
+    createdAtMs: Date.now(),
   });
 
+  // 2) update contacts list entries (both sides)
   await updateLastMessage(currentUser, otherUser, cleanText);
 
+  // 3) update chat summary
   await setDoc(
     doc(db, "chats", chatId),
     {
+      members: [currentUser.uid, otherUser.uid], // ✅ match your rules (members)
       lastMessage: cleanText,
-      lastMessageTime: serverTimestamp(),
-      users: [currentUser.uid, otherUser.uid],
+      lastMessageAt: serverTimestamp(),
+      lastMessageAtMs: Date.now(),
+      updatedAt: serverTimestamp(),
+      updatedAtMs: Date.now(),
     },
     { merge: true }
   );

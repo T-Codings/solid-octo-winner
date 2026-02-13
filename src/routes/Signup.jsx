@@ -37,6 +37,7 @@ function Signup() {
       const userCred = await signup(email, password);
       const user = userCred.user;
 
+      // Create user doc (profile not complete yet)
       await setDoc(
         doc(db, "users", user.uid),
         {
@@ -44,16 +45,20 @@ function Signup() {
           email: user.email,
           firstName: "",
           lastName: "",
+          countryCode: "+237",
+          phoneNumber: "",
           contact: "",
           fullName: "",
           photoURL: "",
+          profileCompletion: 0,
           profileComplete: false,
-          contacts: [],
           createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
         },
         { merge: true }
       );
 
+      // Go to Profile after signup
       navigate("/profile");
     } catch (err) {
       setError(err?.message || "Unable to create account");
@@ -64,71 +69,65 @@ function Signup() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* ===== Modern Background ===== */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950" />
       <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-cyan-500/20 blur-3xl" />
       <div className="absolute -bottom-24 -right-24 w-[28rem] h-[28rem] rounded-full bg-emerald-500/20 blur-3xl" />
       <div className="absolute inset-0 opacity-[0.08] bg-[radial-gradient(circle_at_1px_1px,#fff_1px,transparent_0)] [background-size:22px_22px]" />
 
-      {/* ===== Body ===== */}
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-md">
-          {/* Header */}
-          <div className="text-center mb-6">
-            <div className="mx-auto w-12 h-12 rounded-2xl bg-white/10 backdrop-blur border border-white/10 flex items-center justify-center shadow-lg">
-              <UserPlus className="w-6 h-6 text-emerald-200" />
+          <div className="text-center mb-8">
+            <div className="mx-auto w-16 h-16 rounded-2xl bg-white/10 backdrop-blur border border-white/10 flex items-center justify-center shadow-lg">
+              <UserPlus className="w-7 h-7 text-emerald-200" />
             </div>
 
-            <h1 className="mt-4 text-3xl font-bold text-white tracking-tight">
+            <h1 className="mt-5 text-4xl sm:text-5xl font-extrabold text-white tracking-tight">
               Create your account
             </h1>
-            <p className="mt-2 text-sm text-slate-300">
+            <p className="mt-3 text-lg sm:text-xl text-slate-200/90 leading-relaxed">
               Start chatting with a smoother, modern experience.
             </p>
           </div>
 
-          {/* Card */}
           <div className="rounded-2xl border border-white/10 bg-white/10 backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.35)] p-6 sm:p-7">
             {error && (
-              <div className="mb-4 rounded-xl border border-red-500/20 bg-red-500/10 text-red-100 px-4 py-3 text-sm">
+              <div className="mb-5 rounded-xl border border-red-500/20 bg-red-500/10 text-red-100 px-4 py-3 text-sm">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleSignup} className="space-y-4">
-              {/* Email */}
+            <form onSubmit={handleSignup} className="space-y-5">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-200">
+                <label className="text-base font-semibold text-slate-200">
                   Email
                 </label>
 
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
-                    className="w-full rounded-xl bg-slate-950/40 border border-white/10 px-10 py-3 text-slate-100 placeholder:text-slate-400 outline-none focus:border-emerald-400/50 focus:ring-4 focus:ring-emerald-400/10 transition"
+                    className="w-full rounded-xl bg-slate-950/40 border border-white/10 px-11 py-4 text-base sm:text-lg text-slate-100 placeholder:text-slate-400 outline-none focus:border-emerald-400/50 focus:ring-4 focus:ring-emerald-400/10 transition"
                     required
                   />
                 </div>
               </div>
 
-              {/* Password */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-200">
+                <label className="text-base font-semibold text-slate-200">
                   Password
                 </label>
 
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Create a strong password"
-                    className="w-full rounded-xl bg-slate-950/40 border border-white/10 px-10 pr-12 py-3 text-slate-100 placeholder:text-slate-400 outline-none focus:border-emerald-400/50 focus:ring-4 focus:ring-emerald-400/10 transition"
+                    className="w-full rounded-xl bg-slate-950/40 border border-white/10 px-11 pr-12 py-4 text-base sm:text-lg text-slate-100 placeholder:text-slate-400 outline-none focus:border-emerald-400/50 focus:ring-4 focus:ring-emerald-400/10 transition"
                     required
                   />
 
@@ -138,26 +137,29 @@ function Signup() {
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-white transition"
                     aria-label="Toggle password visibility"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
               </div>
 
-              {/* Confirm */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-200">
+                <label className="text-base font-semibold text-slate-200">
                   Confirm password
                 </label>
 
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
                   <input
                     type={showConfirm ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Re-type your password"
                     className={[
-                      "w-full rounded-xl bg-slate-950/40 border px-10 pr-12 py-3 text-slate-100 placeholder:text-slate-400 outline-none focus:ring-4 transition",
+                      "w-full rounded-xl bg-slate-950/40 border px-11 pr-12 py-4 text-base sm:text-lg text-slate-100 placeholder:text-slate-400 outline-none focus:ring-4 transition",
                       passwordMismatch
                         ? "border-red-400/40 focus:border-red-400/60 focus:ring-red-400/10"
                         : "border-white/10 focus:border-emerald-400/50 focus:ring-emerald-400/10",
@@ -171,28 +173,30 @@ function Signup() {
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-white transition"
                     aria-label="Toggle confirm password visibility"
                   >
-                    {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showConfirm ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
 
                 {passwordMismatch && (
-                  <p className="text-xs text-red-200/90">
+                  <p className="text-sm text-red-200/90">
                     Passwords don’t match.
                   </p>
                 )}
               </div>
 
-              {/* Button */}
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-xl py-3 font-semibold text-white bg-gradient-to-r from-emerald-500 via-cyan-500 to-indigo-600 shadow-lg shadow-emerald-500/10 hover:opacity-95 active:scale-[0.99] transition disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full rounded-2xl py-4 text-base sm:text-lg font-semibold text-white bg-gradient-to-r from-emerald-500 via-cyan-500 to-indigo-600 shadow-lg shadow-emerald-500/10 hover:opacity-95 active:scale-[0.99] transition disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {loading ? "Creating account..." : "Create account"}
               </button>
 
-              {/* Footer */}
-              <p className="text-center text-sm text-slate-300 pt-2">
+              <p className="text-center text-base sm:text-lg text-slate-200/85 pt-2">
                 Already have an account?{" "}
                 <Link
                   to="/login"
@@ -203,11 +207,6 @@ function Signup() {
               </p>
             </form>
           </div>
-
-          {/* Tiny bottom note */}
-          <p className="text-center text-xs text-slate-400 mt-6">
-            By continuing, you agree to basic terms and privacy rules.
-          </p>
         </div>
       </div>
     </div>

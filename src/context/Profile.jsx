@@ -1,4 +1,3 @@
-// src/context/Profile.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
@@ -15,11 +14,8 @@ import {
   Search,
   X,
 } from "lucide-react";
-
-// ✅ correct import for this package
 import { allCountries } from "country-telephone-data";
 
-/** Convert "cm" => 🇨🇲 */
 function isoToFlag(iso2 = "") {
   const code = String(iso2 || "").toUpperCase();
   if (code.length !== 2) return "🌍";
@@ -30,10 +26,8 @@ function isoToFlag(iso2 = "") {
   return String.fromCodePoint(first, second);
 }
 
-// ✅ Build the list once
 const COUNTRY_CODES = (Array.isArray(allCountries) ? allCountries : [])
   .map((c) => {
-    // [name, iso2, dialCode, priority, areaCodes]
     const name = c?.[0] || "";
     const iso2 = (c?.[1] || "").toUpperCase();
     const dial = c?.[2] ? `+${c[2]}` : "";
@@ -42,7 +36,6 @@ const COUNTRY_CODES = (Array.isArray(allCountries) ? allCountries : [])
   .filter((c) => c.name && c.iso2 && c.dial)
   .sort((a, b) => a.name.localeCompare(b.name));
 
-/** ========= Country Code Picker (Portal, not hidden) ========= */
 function CountryCodePicker({ value, onChange }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -64,7 +57,6 @@ function CountryCodePicker({ value, onChange }) {
     );
   }, [q]);
 
-  // Close on ESC
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => e.key === "Escape" && setOpen(false);
@@ -72,7 +64,6 @@ function CountryCodePicker({ value, onChange }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  // Portal positioning
   const [pos, setPos] = useState({ top: 0, left: 0, width: 320 });
   useEffect(() => {
     if (!open) return;
@@ -192,7 +183,6 @@ function CountryCodePicker({ value, onChange }) {
   );
 }
 
-/** ✅ completion score based on 3 fields only (75% max) */
 function calcCompletion75({ firstName, lastName, phoneNumber }) {
   const checks = [
     !!String(firstName || "").trim(),
@@ -200,8 +190,7 @@ function calcCompletion75({ firstName, lastName, phoneNumber }) {
     !!String(phoneNumber || "").trim(),
   ];
   const done = checks.reduce((sum, ok) => sum + (ok ? 1 : 0), 0);
-  // 3 fields => score = (done/4)*100 => max 75
-  return Math.round((done / 4) * 100);
+  return Math.round((done / 4) * 100); // max 75
 }
 
 export default function Profile() {
@@ -210,13 +199,10 @@ export default function Profile() {
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-
   const [countryCode, setCountryCode] = useState("+237");
   const [phoneNumber, setPhoneNumber] = useState("");
 
-  // ✅ local-only preview (no upload to Storage)
   const [photoPreview, setPhotoPreview] = useState("");
-
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState("");
@@ -225,12 +211,6 @@ export default function Profile() {
     () => `${firstName} ${lastName}`.trim(),
     [firstName, lastName]
   );
-
-  const contactCombined = useMemo(() => {
-    const cc = String(countryCode || "").trim();
-    const pn = String(phoneNumber || "").trim();
-    return `${cc} ${pn}`.trim();
-  }, [countryCode, phoneNumber]);
 
   const completion = useMemo(
     () => calcCompletion75({ firstName, lastName, phoneNumber }),
@@ -249,11 +229,11 @@ export default function Profile() {
           setLastName(data.lastName || "");
           setCountryCode(data.countryCode || "+237");
           setPhoneNumber(data.phoneNumber || "");
-          setPhotoPreview(data.photoURL || ""); // if you already had one saved earlier
-          // ✅ consider complete if score is 75 (all 3 fields filled)
-          if ((data.profileCompletion ?? 0) >= 75 || data.profileComplete) {
-            navigate("/contacts");
-          }
+          setPhotoPreview(data.photoURL || "");
+
+          const c = Number(data.profileCompletion ?? 0);
+          const complete = Boolean(data.profileComplete) || c >= 75;
+          if (complete) navigate("/contacts");
         }
       } catch {
         setError("Unable to load profile.");
@@ -268,8 +248,7 @@ export default function Profile() {
   const handlePhotoSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // ✅ local preview only
-    setPhotoPreview(URL.createObjectURL(file));
+    setPhotoPreview(URL.createObjectURL(file)); // preview only
   };
 
   const handleSubmit = async (e) => {
@@ -303,12 +282,8 @@ export default function Profile() {
           countryCode: cc,
           phoneNumber: pn,
           contact: `${cc} ${pn}`,
-
-          // ✅ 75% max (photo not counted)
           profileCompletion,
           profileComplete: profileCompletion >= 75,
-
-          // ✅ photo is NOT uploaded (leave existing photoURL untouched)
           updatedAt: serverTimestamp(),
         },
         { merge: true }
@@ -351,8 +326,9 @@ export default function Profile() {
               Complete your profile
             </h1>
             <p className="mt-2 text-sm text-slate-300">
-              Completion: <span className="text-white font-semibold">{completion}%</span>
-              {" "}({completion === 75 ? "Completed" : "Add your details"})
+              Completion:{" "}
+              <span className="text-white font-semibold">{completion}%</span>
+              {" "}({completion === 75 ? "Completed" : "Fill 3 fields"})
             </p>
           </div>
 
@@ -363,7 +339,6 @@ export default function Profile() {
               </div>
             )}
 
-            {/* Photo (local preview only) */}
             <div className="flex flex-col items-center mb-6">
               <div className="w-24 h-24 rounded-3xl bg-slate-950/40 border border-white/10 overflow-hidden flex items-center justify-center">
                 {photoPreview ? (
@@ -382,7 +357,7 @@ export default function Profile() {
                   {fullName || "Your Name"}
                 </p>
                 <p className="mt-1 text-xs text-slate-300">
-                  Photo upload is disabled (Storage rules).
+                  Photo upload disabled (Storage rules).
                 </p>
               </div>
 
@@ -399,7 +374,6 @@ export default function Profile() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* First name */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-200">
                   First name
@@ -416,7 +390,6 @@ export default function Profile() {
                 </div>
               </div>
 
-              {/* Last name */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-200">
                   Last name
@@ -433,7 +406,6 @@ export default function Profile() {
                 </div>
               </div>
 
-              {/* Phone */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-200">
                   Phone number
@@ -458,11 +430,6 @@ export default function Profile() {
                     />
                   </div>
                 </div>
-
-                <p className="text-xs text-slate-300">
-                  Preview:{" "}
-                  <span className="text-slate-200">{contactCombined}</span>
-                </p>
               </div>
 
               <button
