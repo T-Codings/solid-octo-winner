@@ -1,6 +1,7 @@
+// src/components/Navbar.jsx
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import ChatIcon from "../assets/ChatIcon.jpg";
+import Chaticon from "../assets/chaticon.png";
 import { useAuth } from "../context/AuthContext";
 
 function Navbar() {
@@ -16,33 +17,33 @@ function Navbar() {
     }
   };
 
+  const getUsernameFromEmail = (email) => {
+    if (!email) return "User";
+    return email.split("@")[0];
+  };
+
   return (
     <nav className="bg-white shadow-md py-4">
       <div className="container mx-auto px-4 flex justify-between items-center">
-        <Link to="/" className="flex items-center space-x-1">
-          <div className="flex justify-center">
-            <img src={ChatIcon} alt="Logo" className="h-8 w-8 mx-auto" />
-          </div>
-
-          <span className="text-xl font-semibold text-gray-900">
-          chatApp
-          </span>
+        {/* LOGO */}
+        <Link to="/" className="flex items-center space-x-2">
+          <img src={Chaticon} alt="Logo" className="h-8 w-8" />
         </Link>
 
+        {/* AUTH BUTTONS */}
         <div className="flex items-center gap-4">
           {!currentUser && (
             <>
               <Link
                 to="/login"
-                className="px-4 py-2 text-indigo-600
-               rounded-lg
-                  hover:bg-indigo-50"
+                className="px-4 py-2 text-[#49BCF9] font-semibold rounded-lg border border-[#49BCF9] hover:bg-[#49BCF9]/10 transition"
               >
                 Login
               </Link>
+
               <Link
                 to="/signup"
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                className="px-4 py-2 font-semibold rounded-lg text-white bg-gradient-to-r from-blue-500 via-cyan-500 to-indigo-700 hover:from-blue-600 hover:via-cyan-600 hover:to-indigo-800 transition"
               >
                 Sign Up
               </Link>
@@ -51,12 +52,13 @@ function Navbar() {
 
           {currentUser && (
             <>
-              <span className="text-gray-700">
-                Hi, {currentUser.displayName || "User"}
+              <span className="text-gray-700 font-medium">
+                Hi, {getUsernameFromEmail(currentUser.email)}
               </span>
+
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                className="px-4 py-2 font-semibold rounded-lg text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 transition"
               >
                 Logout
               </button>
