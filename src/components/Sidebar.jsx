@@ -2,6 +2,10 @@ import React, { useEffect, useState } from "react";
 import { collection, onSnapshot, query } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 import { useAuth } from "../context/AuthContext";
+import { updateLastMessage } from "../utils/updateLastMessage";
+import { addMessageToChat } from "../utils/addMessageToChat";
+import ContactList from "./ContactList";
+
 
 function Sidebar({ onSelectContact }) {
   const { currentUser } = useAuth();
@@ -11,9 +15,9 @@ function Sidebar({ onSelectContact }) {
     if (!currentUser) return;
 
     {
-      contact.lastMessage && (
+      ContactList.lastMessage && (
         <div className="text-sm text-gray-600 truncate">
-          {contact.lastMessage}
+          {ContactList.lastMessage}
         </div>
       );
     }

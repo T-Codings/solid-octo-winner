@@ -1,32 +1,33 @@
-// src/utils/updateLastMessage.js
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+// src/utils/addMessageToChat.jsx
+import { addDoc, collection, doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebaseConfig";
+import { updateLastMessage } from "./updateLastMessage";
 
-export async function updateLastMessage(sender, receiver, text) {
-  const timestamp = serverTimestamp();
+function getChatId(a, b) {
+  return [a, b].sort().join("_");
+}
 
-  // Update sender's sidebar doc
+export async function addMessageToChat(currentUser, otherUser, text) {
+  const cleanText = String(text || "").trim();
+  if (!cleanText) return;
+
+  const chatId = getChatId(currentUser.uid, otherUser.uid);
+  const messagesRef = collection(db, "chats", chatId, "messages");
+
+  await addDoc(messagesRef, {
+    text: cleanText,
+    senderUid: currentUser.uid,
+    timestamp: serverTimestamp(),
+  });
+
+  await updateLastMessage(currentUser, otherUser, cleanText);
+
   await setDoc(
-    doc(db, "sidebarContacts", sender.uid),
+    doc(db, "chats", chatId),
     {
-      uid: sender.uid,
-      name: sender.name || "",
-      photoURL: sender.photoURL || null,
-      lastMessage: text || "",
-      lastMessageTime: timestamp,
-    },
-    { merge: true }
-  );
-
-  // Update receiver's sidebar doc
-  await setDoc(
-    doc(db, "sidebarContacts", receiver.uid),
-    {
-      uid: receiver.uid,
-      name: receiver.name || "",
-      photoURL: receiver.photoURL || null,
-      lastMessage: text || "",
-      lastMessageTime: timestamp,
+      lastMessage: cleanText,
+      lastMessageTime: serverTimestamp(),
+      users: [currentUser.uid, otherUser.uid],
     },
     { merge: true }
   );

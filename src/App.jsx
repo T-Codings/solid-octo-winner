@@ -8,7 +8,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import ChatApp from "./components/ChatApp"; // <- fixed
 
 // Routes
-import {Landing, Login, Signup }from "./routes/Landing";
+import Login from "./routes/Login";
+import Signup from "./routes/Signup";
+import Landing from "./routes/Landing";
 import Profile from "./context/Profile";
 
 import { useAuth } from "./context/AuthContext";

@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "browser-image-compression": "^2.0.2",
+    "country-telephone-data": "^0.6.3",
     "firebase": "^12.6.0",
     "lucide-react": "^0.554.0",
     "react": "^19.0.0",

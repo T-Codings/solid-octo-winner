@@ -1,3 +1,4 @@
+// src/routes/Landing.jsx (or wherever your Landing is)
 import React from "react";
 import { Link } from "react-router-dom";
 import {
@@ -7,10 +8,12 @@ import {
   Users,
   Smile,
   Zap,
+  ArrowRight,
+  ShieldCheck,
 } from "lucide-react";
-import ChatIcon from "../assets/ChatIcon.png"; // Correct image import
+import ChatIcon from "../assets/ChatIcon.png";
 
-function Landing() {
+export default function Landing() {
   const features = [
     {
       icon: Zap,
@@ -18,9 +21,9 @@ function Landing() {
       desc: "Messages deliver instantly with real-time syncing across devices.",
     },
     {
-      icon: Lock,
+      icon: ShieldCheck,
       title: "Secure & Private",
-      desc: "Your chats are protected with modern encryption for full privacy.",
+      desc: "Your chats stay private with modern security practices.",
     },
     {
       icon: Smile,
@@ -45,66 +48,138 @@ function Landing() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <div className="container mx-auto px-4 py-16">
-        {/* ======== HERO SECTION ========= */}
-        <div className="text-center mb-16">
-          <div className="flex justify-center mb-6">
-            <img src={ChatIcon} alt="Chat Icon" className="h-16 w-16" />
-          </div>
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Background like SignUp */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950" />
+      <div className="absolute inset-0 opacity-[0.08] bg-[radial-gradient(circle_at_1px_1px,#fff_1px,transparent_0)] [background-size:22px_22px]" />
 
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 max-w-2xl mx-auto mb-6">
-            Fast, Simple & Sweet Messaging for Everyone
-          </h1>
-
-          <p className="text-gray-600 max-w-xl mx-auto">
-            Stay connected with smooth real-time chatting. Beautiful design,
-            effortless communication, and private conversations all in one
-            place.
-          </p>
-        </div>
-
-        {/* ================= CTA BUTTONS ================= */}
-        <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-12">
-          <Link
-            to="/signup"
-            className="px-6 py-3 bg-gradient-to-r from-blue-500 via-cyan-500 to-indigo-700 text-white rounded-lg font-semibold shadow-md hover:from-blue-600 hover:via-cyan-600 hover:to-indigo-800 transition-all"
-          >
-            Get Started for Free
-          </Link>
-
-          <Link
-            to="/login"
-            className="px-6 py-3 bg-white text-blue-500 border border-blue-500 rounded-lg font-semibold shadow-md hover:bg-blue-50 transition-all"
-          >
-            Sign In
-          </Link>
-        </div>
-
-        {/* ================= FEATURES SECTION ================= */}
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto p-6">
-          {features.map((feature, idx) => (
-            <div
-              key={idx}
-              className="bg-white p-6 rounded-xl shadow-md border border-blue-100 hover:shadow-lg transition-all"
-            >
-              <div className="flex flex-col md:flex-row items-center md:items-start text-center md:text-left mb-3">
-                <feature.icon className="h-6 w-6 text-blue-500 mb-2 md:mb-0 md:mr-3" />
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {feature.title}
-                </h3>
+      <div className="relative z-10">
+        <div className="min-h-screen flex items-center justify-center px-4 py-12">
+          <div className="w-full max-w-6xl">
+            {/* Header */}
+            <div className="text-center mb-10">
+              <div className="mx-auto w-14 h-14 rounded-2xl bg-white/10 backdrop-blur border border-white/10 flex items-center justify-center shadow-lg overflow-hidden">
+                <img src={ChatIcon} alt="Chat Icon" className="w-10 h-10" />
               </div>
-              <p className="text-gray-600 text-center md:text-left">
-                {feature.desc}
+
+              <h1 className="mt-5 text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight">
+                Fast, Simple & Sweet Messaging
+              </h1>
+
+              <p className="mt-3 text-sm sm:text-base text-slate-300 max-w-2xl mx-auto">
+                Stay connected with smooth real-time chatting. Beautiful design,
+                effortless communication, and private conversations — all in one place.
               </p>
+
+              {/* CTAs */}
+              <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Link
+                  to="/signup"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-semibold text-white bg-gradient-to-r from-emerald-500 via-cyan-500 to-indigo-600 shadow-lg shadow-emerald-500/10 hover:opacity-95 active:scale-[0.99] transition"
+                >
+                  Get Started for Free <ArrowRight className="w-4 h-4" />
+                </Link>
+
+                <Link
+                  to="/login"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-semibold text-white bg-white/10 border border-white/10 backdrop-blur hover:bg-white/15 transition"
+                >
+                  Sign In <Lock className="w-4 h-4" />
+                </Link>
+              </div>
+
+              {/* Small trust line */}
+              <div className="mt-4 text-xs text-slate-400 flex items-center justify-center gap-2">
+                <ShieldCheck className="w-4 h-4" />
+                No ads • Clean UI • Your conversations stay yours
+              </div>
             </div>
-          ))}
+
+            {/* Main glass card */}
+            <div className="rounded-2xl border border-white/10 bg-white/10 backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.35)] p-6 sm:p-8">
+              <div className="flex items-center justify-between gap-4 mb-6">
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-bold text-white">
+                    Why you’ll love it
+                  </h2>
+                  <p className="text-sm text-slate-300 mt-1">
+                    Everything you need to chat confidently — fast and simple.
+                  </p>
+                </div>
+
+                <div className="hidden md:flex items-center gap-2 text-xs text-slate-300">
+                  <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">
+                    Real-time
+                  </span>
+                  <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">
+                    Secure
+                  </span>
+                  <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">
+                    Multi-device
+                  </span>
+                </div>
+              </div>
+
+              {/* Features grid */}
+              <div className="grid gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {features.map((feature, idx) => (
+                  <div
+                    key={idx}
+                    className="group rounded-2xl border border-white/10 bg-slate-950/30 hover:bg-slate-950/40 transition p-5"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="shrink-0 w-11 h-11 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center group-hover:bg-white/15 transition">
+                        <feature.icon className="w-5 h-5 text-slate-100" />
+                      </div>
+
+                      <div className="min-w-0">
+                        <h3 className="text-base font-semibold text-white">
+                          {feature.title}
+                        </h3>
+                        <p className="mt-1 text-sm text-slate-300">
+                          {feature.desc}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Bottom CTA */}
+              <div className="mt-8 flex flex-col md:flex-row items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 p-5">
+                <div className="text-center md:text-left">
+                  <p className="text-white font-semibold">
+                    Ready to start chatting?
+                  </p>
+                  <p className="text-sm text-slate-300">
+                    Create an account in seconds and continue.
+                  </p>
+                </div>
+
+                <div className="flex w-full md:w-auto gap-3">
+                  <Link
+                    to="/signup"
+                    className="flex-1 md:flex-none inline-flex items-center justify-center rounded-xl px-5 py-3 font-semibold text-white bg-gradient-to-r from-emerald-500 via-cyan-500 to-indigo-600 shadow-lg shadow-emerald-500/10 hover:opacity-95 active:scale-[0.99] transition"
+                  >
+                    Sign up
+                  </Link>
+                  <Link
+                    to="/login"
+                    className="flex-1 md:flex-none inline-flex items-center justify-center rounded-xl px-5 py-3 font-semibold text-white bg-white/10 border border-white/10 hover:bg-white/15 transition"
+                  >
+                    Login
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer tiny */}
+            <div className="mt-8 text-center text-xs text-slate-500">
+              © {new Date().getFullYear()} • Built with React + Firebase
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-
-export default Landing;
-
-

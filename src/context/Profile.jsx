@@ -1,41 +1,257 @@
-import React, { useState, useEffect } from "react";
-import { useAuth } from "./AuthContext";
-import { doc, setDoc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { db, storage } from "../firebaseConfig";
-import imageCompression from "browser-image-compression";
+// src/context/Profile.jsx
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "../firebaseConfig";
 import { useNavigate } from "react-router-dom";
+import { createPortal } from "react-dom";
+import {
+  User,
+  Phone,
+  Image as ImageIcon,
+  Loader2,
+  CheckCircle2,
+  ChevronDown,
+  Search,
+  X,
+} from "lucide-react";
 
-function Profile() {
+// ✅ correct import for this package
+import { allCountries } from "country-telephone-data";
+
+/** Convert "cm" => 🇨🇲 */
+function isoToFlag(iso2 = "") {
+  const code = String(iso2 || "").toUpperCase();
+  if (code.length !== 2) return "🌍";
+  const A = 0x1f1e6;
+  const alphaA = "A".charCodeAt(0);
+  const first = A + (code.charCodeAt(0) - alphaA);
+  const second = A + (code.charCodeAt(1) - alphaA);
+  return String.fromCodePoint(first, second);
+}
+
+// ✅ Build the list once
+const COUNTRY_CODES = (Array.isArray(allCountries) ? allCountries : [])
+  .map((c) => {
+    // [name, iso2, dialCode, priority, areaCodes]
+    const name = c?.[0] || "";
+    const iso2 = (c?.[1] || "").toUpperCase();
+    const dial = c?.[2] ? `+${c[2]}` : "";
+    return { name, iso2, dial, flag: isoToFlag(iso2) };
+  })
+  .filter((c) => c.name && c.iso2 && c.dial)
+  .sort((a, b) => a.name.localeCompare(b.name));
+
+/** ========= Country Code Picker (Portal, not hidden) ========= */
+function CountryCodePicker({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const btnRef = useRef(null);
+
+  const selected =
+    COUNTRY_CODES.find((c) => c.dial === value) ||
+    COUNTRY_CODES.find((c) => c.iso2 === "CM") ||
+    COUNTRY_CODES[0];
+
+  const filtered = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    if (!s) return COUNTRY_CODES;
+    return COUNTRY_CODES.filter(
+      (c) =>
+        c.name.toLowerCase().includes(s) ||
+        c.iso2.toLowerCase().includes(s) ||
+        c.dial.includes(s)
+    );
+  }, [q]);
+
+  // Close on ESC
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  // Portal positioning
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 320 });
+  useEffect(() => {
+    if (!open) return;
+    const el = btnRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const r = el.getBoundingClientRect();
+      setPos({
+        top: r.bottom + 10,
+        left: Math.min(r.left, window.innerWidth - 340),
+        width: Math.max(r.width, 260),
+      });
+    };
+
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+    };
+  }, [open]);
+
+  return (
+    <div className="relative">
+      <button
+        ref={btnRef}
+        type="button"
+        onClick={() => setOpen((s) => !s)}
+        className="w-full rounded-xl bg-slate-950/40 border border-white/10 px-3 py-3 text-slate-100 outline-none hover:bg-slate-950/50 transition flex items-center justify-between"
+      >
+        <span className="flex items-center gap-2 min-w-0">
+          <span className="text-lg">{selected?.flag || "🌍"}</span>
+          <span className="text-sm text-slate-200 truncate">
+            {selected?.dial || "+000"} <span className="text-slate-400">•</span>{" "}
+            {selected?.iso2 || "XX"}
+          </span>
+        </span>
+        <ChevronDown className="w-4 h-4 text-slate-300" />
+      </button>
+
+      {open &&
+        createPortal(
+          <>
+            <div
+              className="fixed inset-0 z-[9998]"
+              onClick={() => setOpen(false)}
+            />
+            <div
+              className="fixed z-[9999] rounded-2xl border border-white/10 bg-slate-950/90 backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.65)] overflow-hidden"
+              style={{
+                top: pos.top,
+                left: pos.left,
+                width: Math.min(pos.width, 360),
+                maxWidth: "90vw",
+              }}
+            >
+              <div className="p-3 border-b border-white/10">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                  <input
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                    placeholder="Search country, ISO, or code…"
+                    className="w-full rounded-xl bg-white/5 border border-white/10 pl-10 pr-10 py-2.5 text-slate-100 placeholder:text-slate-400 outline-none focus:border-emerald-400/50 focus:ring-4 focus:ring-emerald-400/10 transition"
+                    autoFocus
+                  />
+                  {q && (
+                    <button
+                      type="button"
+                      onClick={() => setQ("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-300 hover:text-white transition"
+                      aria-label="Clear search"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="max-h-[320px] overflow-auto">
+                {filtered.map((c) => (
+                  <button
+                    key={`${c.iso2}-${c.dial}`}
+                    type="button"
+                    onClick={() => {
+                      onChange(c.dial);
+                      setOpen(false);
+                      setQ("");
+                    }}
+                    className="w-full px-3 py-2.5 flex items-center gap-3 text-left hover:bg-white/5 transition"
+                  >
+                    <span className="text-lg">{c.flag}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm text-slate-100 truncate">
+                        {c.name}
+                      </div>
+                      <div className="text-xs text-slate-400">
+                        {c.iso2} • {c.dial}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+
+                {filtered.length === 0 && (
+                  <div className="px-4 py-6 text-center text-sm text-slate-300">
+                    No results.
+                  </div>
+                )}
+              </div>
+            </div>
+          </>,
+          document.body
+        )}
+    </div>
+  );
+}
+
+/** ✅ completion score based on 3 fields only (75% max) */
+function calcCompletion75({ firstName, lastName, phoneNumber }) {
+  const checks = [
+    !!String(firstName || "").trim(),
+    !!String(lastName || "").trim(),
+    !!String(phoneNumber || "").trim(),
+  ];
+  const done = checks.reduce((sum, ok) => sum + (ok ? 1 : 0), 0);
+  // 3 fields => score = (done/4)*100 => max 75
+  return Math.round((done / 4) * 100);
+}
+
+export default function Profile() {
   const { currentUser, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [contact, setContact] = useState("");
-  const [photoFile, setPhotoFile] = useState(null);
+
+  const [countryCode, setCountryCode] = useState("+237");
+  const [phoneNumber, setPhoneNumber] = useState("");
+
+  // ✅ local-only preview (no upload to Storage)
   const [photoPreview, setPhotoPreview] = useState("");
-  const [uploadProgress, setUploadProgress] = useState(0);
+
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState("");
 
-  // Load profile
+  const fullName = useMemo(
+    () => `${firstName} ${lastName}`.trim(),
+    [firstName, lastName]
+  );
+
+  const contactCombined = useMemo(() => {
+    const cc = String(countryCode || "").trim();
+    const pn = String(phoneNumber || "").trim();
+    return `${cc} ${pn}`.trim();
+  }, [countryCode, phoneNumber]);
+
+  const completion = useMemo(
+    () => calcCompletion75({ firstName, lastName, phoneNumber }),
+    [firstName, lastName, phoneNumber]
+  );
+
   useEffect(() => {
     if (!currentUser) return;
 
     const loadProfile = async () => {
       try {
-        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-
-        if (userDoc.exists()) {
-          const data = userDoc.data();
+        const snap = await getDoc(doc(db, "users", currentUser.uid));
+        if (snap.exists()) {
+          const data = snap.data();
           setFirstName(data.firstName || "");
           setLastName(data.lastName || "");
-          setContact(data.contact || "");
-          setPhotoPreview(data.photoURL || "");
-
-          if (data.profileComplete) {
+          setCountryCode(data.countryCode || "+237");
+          setPhoneNumber(data.phoneNumber || "");
+          setPhotoPreview(data.photoURL || ""); // if you already had one saved earlier
+          // ✅ consider complete if score is 75 (all 3 fields filled)
+          if ((data.profileCompletion ?? 0) >= 75 || data.profileComplete) {
             navigate("/contacts");
           }
         }
@@ -49,162 +265,216 @@ function Profile() {
     loadProfile();
   }, [currentUser, navigate]);
 
-  // Select + compress photo
-  const handlePhotoSelect = async (e) => {
+  const handlePhotoSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    try {
-      const compressed = await imageCompression(file, {
-        maxSizeMB: 0.3,
-        maxWidthOrHeight: 600,
-        useWebWorker: true,
-      });
-
-      setPhotoFile(compressed);
-      setPhotoPreview(URL.createObjectURL(compressed));
-    } catch {
-      setError("Image compression failed.");
-    }
+    // ✅ local preview only
+    setPhotoPreview(URL.createObjectURL(file));
   };
 
-  // Submit profile
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!currentUser) return setError("You must be logged in.");
+
+    const f = firstName.trim();
+    const l = lastName.trim();
+    const cc = String(countryCode || "").trim();
+    const pn = String(phoneNumber || "").trim();
+
+    if (!f || !l || !cc || !pn) return setError("Please complete all fields.");
+
+    const profileCompletion = calcCompletion75({
+      firstName: f,
+      lastName: l,
+      phoneNumber: pn,
+    });
+
     setLoading(true);
-
     try {
-      if (!firstName || !lastName || !contact) {
-        setError("All fields are required.");
-        setLoading(false);
-        return;
-      }
-
-      // Save basic profile info
       await setDoc(
         doc(db, "users", currentUser.uid),
         {
           uid: currentUser.uid,
-          email: currentUser.email,
-          firstName,
-          lastName,
-          fullName: `${firstName} ${lastName}`,
-          contact,
-          profileComplete: true,
-          updatedAt: new Date(),
+          firstName: f,
+          lastName: l,
+          fullName: `${f} ${l}`,
+          countryCode: cc,
+          phoneNumber: pn,
+          contact: `${cc} ${pn}`,
+
+          // ✅ 75% max (photo not counted)
+          profileCompletion,
+          profileComplete: profileCompletion >= 75,
+
+          // ✅ photo is NOT uploaded (leave existing photoURL untouched)
+          updatedAt: serverTimestamp(),
         },
         { merge: true }
       );
 
-      // Upload Profile Photo
-      if (photoFile) {
-        const storageRef = ref(
-          storage,
-          `profile_photos/${currentUser.uid}.jpg`
-        );
-        const uploadTask = uploadBytesResumable(storageRef, photoFile);
-
-        const finalPhotoURL = await new Promise((resolve, reject) => {
-          uploadTask.on(
-            "state_changed",
-            (snap) =>
-              setUploadProgress(
-                Math.round((snap.bytesTransferred / snap.totalBytes) * 100)
-              ),
-            reject,
-            async () => {
-              const url = await getDownloadURL(uploadTask.snapshot.ref);
-              resolve(url);
-            }
-          );
-        });
-
-        // Save Firebase HTTPS URL
-        await updateDoc(doc(db, "users", currentUser.uid), {
-          photoURL: finalPhotoURL,
-        });
-      }
-
       navigate("/contacts");
     } catch (err) {
-      setError(err.message);
+      setError(err?.message || "Failed to save profile.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
-  // Loading spinner (fixed)
   if (authLoading || fetching) {
     return (
-      <div className="min-h-screen flex justify-center items-center">
-        <div className="w-16 h-16 border-8 border-gray-300 border-t-blue-600 border-b-green-600 rounded-full animate-spin" />
+      <div className="min-h-screen relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950" />
+        <div className="relative z-10 min-h-screen flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3 text-slate-200">
+            <Loader2 className="w-8 h-8 animate-spin" />
+            <span className="text-sm">Loading profile...</span>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-blue-50 px-4">
-      <div className="bg-white p-8 rounded shadow-md w-full max-w-md">
-        <h2 className="text-xl font-bold mb-4 text-center">
-          Complete Your Profile
-        </h2>
+    <div className="min-h-screen relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950" />
+      <div className="absolute inset-0 opacity-[0.08] bg-[radial-gradient(circle_at_1px_1px,#fff_1px,transparent_0)] [background-size:22px_22px]" />
 
-        {error && <p className="text-red-600 mb-3">{error}</p>}
+      <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-10">
+        <div className="w-full max-w-lg">
+          <div className="text-center mb-6">
+            <div className="mx-auto w-12 h-12 rounded-2xl bg-white/10 backdrop-blur border border-white/10 flex items-center justify-center shadow-lg">
+              <CheckCircle2 className="w-6 h-6 text-emerald-200" />
+            </div>
+            <h1 className="mt-4 text-3xl font-bold text-white tracking-tight">
+              Complete your profile
+            </h1>
+            <p className="mt-2 text-sm text-slate-300">
+              Completion: <span className="text-white font-semibold">{completion}%</span>
+              {" "}({completion === 75 ? "Completed" : "Add your details"})
+            </p>
+          </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="email"
-            value={currentUser.email}
-            disabled
-            className="w-full border px-3 py-2 rounded bg-gray-100"
-          />
+          <div className="rounded-2xl border border-white/10 bg-white/10 backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.35)] p-6 sm:p-7">
+            {error && (
+              <div className="mb-4 rounded-xl border border-red-500/20 bg-red-500/10 text-red-100 px-4 py-3 text-sm">
+                {error}
+              </div>
+            )}
 
-          <input
-            type="text"
-            placeholder="First Name"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            className="w-full border px-3 py-2 rounded"
-          />
+            {/* Photo (local preview only) */}
+            <div className="flex flex-col items-center mb-6">
+              <div className="w-24 h-24 rounded-3xl bg-slate-950/40 border border-white/10 overflow-hidden flex items-center justify-center">
+                {photoPreview ? (
+                  <img
+                    src={photoPreview}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <ImageIcon className="w-7 h-7 text-slate-300" />
+                )}
+              </div>
 
-          <input
-            type="text"
-            placeholder="Last Name"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            className="w-full border px-3 py-2 rounded"
-          />
+              <div className="mt-3 text-center">
+                <p className="text-white font-semibold">
+                  {fullName || "Your Name"}
+                </p>
+                <p className="mt-1 text-xs text-slate-300">
+                  Photo upload is disabled (Storage rules).
+                </p>
+              </div>
 
-          <input
-            type="text"
-            placeholder="Contact Number"
-            value={contact}
-            onChange={(e) => setContact(e.target.value)}
-            className="w-full border px-3 py-2 rounded"
-          />
+              <label className="mt-3 cursor-pointer inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white bg-white/10 hover:bg-white/15 transition">
+                <ImageIcon className="w-4 h-4" />
+                Choose photo (preview only)
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoSelect}
+                  className="hidden"
+                />
+              </label>
+            </div>
 
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handlePhotoSelect}
-            className="text-sm"
-          />
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* First name */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-200">
+                  First name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                  <input
+                    type="text"
+                    placeholder="e.g. Theodore"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="w-full rounded-xl bg-slate-950/40 border border-white/10 px-10 py-3 text-slate-100 placeholder:text-slate-400 outline-none focus:border-emerald-400/50 focus:ring-4 focus:ring-emerald-400/10 transition"
+                  />
+                </div>
+              </div>
 
-          {photoPreview && (
-            <img
-              src={photoPreview}
-              className="w-28 h-28 mx-auto rounded-full mt-3 object-cover"
-            />
-          )}
+              {/* Last name */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-200">
+                  Last name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                  <input
+                    type="text"
+                    placeholder="e.g. Nyang"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="w-full rounded-xl bg-slate-950/40 border border-white/10 px-10 py-3 text-slate-100 placeholder:text-slate-400 outline-none focus:border-emerald-400/50 focus:ring-4 focus:ring-emerald-400/10 transition"
+                  />
+                </div>
+              </div>
 
-          <button className="w-full bg-blue-600 text-white py-2 rounded">
-            {loading ? "Saving..." : "Save Profile"}
-          </button>
-        </form>
+              {/* Phone */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-200">
+                  Phone number
+                </label>
+
+                <div className="grid grid-cols-5 gap-3">
+                  <div className="col-span-2">
+                    <CountryCodePicker
+                      value={countryCode}
+                      onChange={setCountryCode}
+                    />
+                  </div>
+
+                  <div className="relative col-span-3">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                    <input
+                      type="text"
+                      placeholder="6xx xxx xxx"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      className="w-full rounded-xl bg-slate-950/40 border border-white/10 pl-10 pr-3 py-3 text-slate-100 placeholder:text-slate-400 outline-none focus:border-emerald-400/50 focus:ring-4 focus:ring-emerald-400/10 transition"
+                    />
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-300">
+                  Preview:{" "}
+                  <span className="text-slate-200">{contactCombined}</span>
+                </p>
+              </div>
+
+              <button
+                disabled={loading}
+                className="w-full rounded-xl py-3 font-semibold text-white bg-gradient-to-r from-emerald-500 via-cyan-500 to-indigo-600 shadow-lg shadow-emerald-500/10 hover:opacity-95 active:scale-[0.99] transition disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {loading ? "Saving..." : "Save profile"}
+              </button>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
-
-export default Profile;
