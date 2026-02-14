@@ -146,29 +146,6 @@ export default function Landing() {
               ))}
             </div>
 
-            {/* How it works (restored) */}
-            <div className="mt-10 grid grid-cols-1 gap-5 lg:grid-cols-3">
-              {steps.map((s, i) => (
-                <div
-                  key={i}
-                  className="rounded-2xl border border-white/10 bg-white/5 p-6 sm:p-7"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-white font-extrabold text-lg sm:text-xl">
-                      {i + 1}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-white font-semibold text-lg sm:text-xl">
-                        {s.title}
-                      </div>
-                      <div className="mt-1 text-base sm:text-lg text-slate-200/80 leading-relaxed">
-                        {s.desc}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </div>

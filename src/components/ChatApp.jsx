@@ -1,18 +1,15 @@
-import React, { useState } from "react";
-import Sidebar from "./Sidebar"; // Correct path
-import ChatArea from "./ChatArea"; // Correct path
+// src/components/ChatApp.jsx
+import React from "react";
+import Sidebar from "./Sidebar";
+import ChatArea from "./ChatArea";
 
 function ChatApp() {
-  const [selectedContact, setSelectedContact] = useState(null);
-  const [typingUser, setTypingUser] = useState("");
-
   return (
     <div className="flex h-screen">
-      {/* Sidebar with contact selection */}
-      <Sidebar onSelectContact={setSelectedContact} />
-
-      {/* Chat area for selected contact */}
-      <ChatArea contact={selectedContact} setTypingUser={setTypingUser} />
+      <Sidebar />
+      <div className="flex-1">
+        <ChatArea selectedContact={null} />
+      </div>
     </div>
   );
 }
