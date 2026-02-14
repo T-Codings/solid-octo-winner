@@ -1,6 +1,11 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import {
+  onAuthStateChanged,
+  signOut,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+} from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../firebaseConfig";
 
@@ -12,35 +17,45 @@ export function AuthProvider({ children }) {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const signup = (email, password) =>
+    createUserWithEmailAndPassword(auth, email, password);
+
+  const login = (email, password) =>
+    signInWithEmailAndPassword(auth, email, password);
+
+  const logout = () => signOut(auth);
+
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
 
-      try {
-        if (!user) {
-          setUserData(null);
-          return;
-        }
+      // ✅ IMPORTANT: always end loading, even when logged out
+      if (!user) {
+        setUserData(null);
+        setLoading(false);
+        return;
+      }
 
-        // ✅ load user doc
+      try {
         const ref = doc(db, "users", user.uid);
         const snap = await getDoc(ref);
         setUserData(snap.exists() ? snap.data() : null);
       } catch (e) {
         console.error("AuthContext load error:", e);
+        // If offline, still allow app to render (Landing/Login)
         setUserData(null);
       } finally {
-        setLoading(false); // ✅ ALWAYS runs
+        setLoading(false);
       }
     });
 
     return () => unsub();
   }, []);
 
-  const logout = () => signOut(auth);
-
   return (
-    <AuthContext.Provider value={{ currentUser, userData, loading, logout }}>
+    <AuthContext.Provider
+      value={{ currentUser, userData, loading, signup, login, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

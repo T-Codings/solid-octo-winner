@@ -1,37 +1,14 @@
 // src/components/ProtectedRoute.jsx
-import React, { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import React from "react";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "../firebaseConfig";
 
 function ProtectedRoute({ children }) {
-  const { currentUser, loading } = useAuth();
-  const [userData, setUserData] = useState(null);
-  const [fetching, setFetching] = useState(true);
+  const { currentUser, userData, loading } = useAuth();
+  const location = useLocation();
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (currentUser) {
-        try {
-          const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-          if (userDoc.exists()) {
-            setUserData(userDoc.data());
-          }
-        } catch (err) {
-          console.error("Failed to fetch user data:", err);
-        } finally {
-          setFetching(false);
-        }
-      } else {
-        setFetching(false);
-      }
-    };
-
-    fetchUserData();
-  }, [currentUser]);
-
-  if (loading || fetching) {
+  // ✅ only show "Checking..." while Firebase auth state is resolving
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-indigo-500">
         Checking...
@@ -39,9 +16,25 @@ function ProtectedRoute({ children }) {
     );
   }
 
-  if (!currentUser) return <Navigate to="/login" replace />;
+  // ✅ not logged in -> go to login, keep where they wanted to go
+  if (!currentUser) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
 
-  if (userData && userData.profileComplete === false) {
+  /**
+   * ✅ If userData hasn't loaded (offline / slow Firestore),
+   * don't block the whole app forever.
+   * Let them continue, or you can choose to send them to /profile.
+   */
+  if (!userData) {
+    return children; // best UX when offline
+  }
+
+  // ✅ force profile completion flow if needed
+  const completion = Number(userData?.profileCompletion ?? 0);
+  const complete = Boolean(userData?.profileComplete) || completion >= 75;
+
+  if (!complete && location.pathname !== "/profile") {
     return <Navigate to="/profile" replace />;
   }
 

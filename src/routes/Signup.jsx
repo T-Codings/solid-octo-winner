@@ -1,3 +1,4 @@
+// src/routes/Signup.jsx
 import React, { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -19,6 +20,8 @@ function Signup() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const emailTrimmed = useMemo(() => String(email || "").trim(), [email]);
+
   const passwordMismatch = useMemo(() => {
     return confirmPassword.length > 0 && password !== confirmPassword;
   }, [password, confirmPassword]);
@@ -34,32 +37,36 @@ function Signup() {
 
     setLoading(true);
     try {
-      const userCred = await signup(email, password);
+      const userCred = await signup(emailTrimmed, password);
       const user = userCred.user;
 
-      // Create user doc (profile not complete yet)
+      // ✅ Create user doc (profile not complete yet)
       await setDoc(
         doc(db, "users", user.uid),
         {
           uid: user.uid,
-          email: user.email,
+          email: user.email || emailTrimmed,
+
           firstName: "",
           lastName: "",
+          fullName: "",
+
           countryCode: "+237",
           phoneNumber: "",
-          contact: "",
-          fullName: "",
+
           photoURL: "",
+
           profileCompletion: 0,
           profileComplete: false,
+
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         },
         { merge: true }
       );
 
-      // Go to Profile after signup
-      navigate("/profile");
+      // ✅ Go to Profile after signup
+      navigate("/profile", { replace: true });
     } catch (err) {
       setError(err?.message || "Unable to create account");
     } finally {
@@ -111,6 +118,7 @@ function Signup() {
                     placeholder="you@example.com"
                     className="w-full rounded-xl bg-slate-950/40 border border-white/10 px-11 py-4 text-base sm:text-lg text-slate-100 placeholder:text-slate-400 outline-none focus:border-emerald-400/50 focus:ring-4 focus:ring-emerald-400/10 transition"
                     required
+                    autoComplete="email"
                   />
                 </div>
               </div>
@@ -129,6 +137,7 @@ function Signup() {
                     placeholder="Create a strong password"
                     className="w-full rounded-xl bg-slate-950/40 border border-white/10 px-11 pr-12 py-4 text-base sm:text-lg text-slate-100 placeholder:text-slate-400 outline-none focus:border-emerald-400/50 focus:ring-4 focus:ring-emerald-400/10 transition"
                     required
+                    autoComplete="new-password"
                   />
 
                   <button
@@ -165,6 +174,7 @@ function Signup() {
                         : "border-white/10 focus:border-emerald-400/50 focus:ring-emerald-400/10",
                     ].join(" ")}
                     required
+                    autoComplete="new-password"
                   />
 
                   <button
@@ -190,7 +200,7 @@ function Signup() {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || passwordMismatch}
                 className="w-full rounded-2xl py-4 text-base sm:text-lg font-semibold text-white bg-gradient-to-r from-emerald-500 via-cyan-500 to-indigo-600 shadow-lg shadow-emerald-500/10 hover:opacity-95 active:scale-[0.99] transition disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {loading ? "Creating account..." : "Create account"}

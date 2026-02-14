@@ -1,49 +1,24 @@
 // src/components/ChatArea.jsx
+
 import React, { useEffect, useRef, useState } from "react";
 import { addMessageToChat } from "../utils/addMessageToChat";
 import { useAuth } from "../context/AuthContext";
+import MessageInput from "./MessageInput";
 
 export default function ChatArea({ selectedContact }) {
   const { currentUser } = useAuth();
 
-  const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
 
-  const inputRef = useRef(null);
-
-  // focus input when contact changes
-  useEffect(() => {
-    if (selectedContact) {
-      setMessage("");
-      inputRef.current?.focus();
-    }
-  }, [selectedContact]);
-
-  const canSend =
-    !!currentUser && !!selectedContact && message.trim().length > 0 && !sending;
-
-  const handleSend = async () => {
-    if (!canSend) return;
-
-    const text = message.trim();
+  const handleSend = async (text) => {
+    if (!currentUser || !selectedContact || !text.trim() || sending) return;
     setSending(true);
-
     try {
-      await addMessageToChat(currentUser, selectedContact, text);
-      setMessage("");
-      inputRef.current?.focus();
+      await addMessageToChat(currentUser, selectedContact, text.trim());
     } catch (e) {
       console.error("Send failed:", e);
     } finally {
       setSending(false);
-    }
-  };
-
-  const onKeyDown = (e) => {
-    // Enter to send
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleSend();
     }
   };
 
@@ -87,28 +62,7 @@ export default function ChatArea({ selectedContact }) {
       </div>
 
       {/* ✅ Input area */}
-      <div className="p-3 border-t border-gray-200 flex gap-2">
-        <input
-          ref={inputRef}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={onKeyDown}
-          disabled={!selectedContact || sending}
-          className="flex-1 border rounded-xl px-3 py-2 outline-none focus:ring-1 focus:ring-gray-300 disabled:bg-gray-100"
-          placeholder={
-            selectedContact ? "Type a message..." : "Select a contact first"
-          }
-        />
-
-        <button
-          onClick={handleSend}
-          disabled={!canSend}
-          className="px-4 py-2 rounded-xl bg-green-600 text-white font-semibold
-                     disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {sending ? "Sending..." : "Send"}
-        </button>
-      </div>
+      <MessageInput onSend={handleSend} disabled={!selectedContact || sending} />
     </div>
   );
 }

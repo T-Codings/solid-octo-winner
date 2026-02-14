@@ -1,6 +1,7 @@
 
 // src/components/ContactList.jsx
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const Avatar = `${import.meta.env.BASE_URL}avatar.png`;
 
@@ -41,9 +42,13 @@ function ContactRow({ c, idx, onSelectContact, onTogglePin }) {
   const title = pickName(c);
   const lastTimeMs = c.lastMessageAtMs || c.updatedAtMs || 0;
 
+  const navigate = useNavigate();
   return (
     <div
-      onClick={() => onSelectContact?.({ ...c, uid, id: c.id || uid })}
+      onClick={() => {
+        onSelectContact?.({ ...c, uid, id: c.id || uid });
+        navigate(`/chat/${c.id || uid}`);
+      }}
       className="flex items-center gap-3 p-3 cursor-pointer transition hover:bg-cyan-100/80"
     >
       <img
