@@ -42,8 +42,31 @@ export default function ChatAreaHeader({ contact }) {
   const contactUid = contact?.uid || contact?.id || "";
   const myUid = currentUser?.uid || "";
 
+  // Last conversation details
+  const lastMsg = contact.lastMessage || "No messages yet.";
+  const lastMsgTime = contact.lastMessageAtMs
+    ? new Date(contact.lastMessageAtMs).toLocaleString()
+    : "";
+
+  // Sender: currentUser, Receiver: contact
+  const senderProfile = {
+    name:
+      currentUser?.displayName ||
+      currentUser?.fullName ||
+      currentUser?.email ||
+      "Me",
+    photoURL: currentUser?.photoURL || avatarFallback,
+    email: currentUser?.email || "",
+  };
+
+  const receiverProfile = {
+    name: displayName,
+    photoURL: contact.photoURL || avatarFallback,
+    email: contact.email || "",
+  };
+
   const [menuOpen, setMenuOpen] = useState(false);
-  const [muted, setMuted] = useState(!!contact?.muted); // optional field from firestore
+  const [muted, setMuted] = useState(!!contact?.muted);
   const [showContact, setShowContact] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -158,10 +181,8 @@ export default function ChatAreaHeader({ contact }) {
     setShowContact(false);
   }
 
-  // ✅ persist mute to contacts list (optional, but recommended)
   async function handleMute() {
     if (!myUid || !contactUid) {
-      // fallback to local only
       setMuted((m) => !m);
       setMenuOpen(false);
       return;
@@ -172,10 +193,7 @@ export default function ChatAreaHeader({ contact }) {
     setMenuOpen(false);
 
     try {
-      // Path you use elsewhere: contacts/{uid}/list/{contactUid}
       const ref = doc(db, "contacts", myUid, "list", contactUid);
-
-      // Use setDoc merge so you don't accidentally wipe the contact document
       await setDoc(
         ref,
         {
@@ -187,7 +205,6 @@ export default function ChatAreaHeader({ contact }) {
       );
     } catch (e) {
       console.error("Mute update failed:", e);
-      // revert local state if you want
       setMuted((m) => !m);
       alert(e?.message || "Failed to update mute.");
     }
@@ -195,29 +212,66 @@ export default function ChatAreaHeader({ contact }) {
 
   return (
     // ✅ STICKY HEADER
-    <div className="sticky top-0 z-40 flex items-center gap-3 p-4 border-b bg-white">
-      <img
-        src={contact.photoURL || avatarFallback}
-        alt={displayName}
-        className="w-10 h-10 rounded-full object-cover border border-gray-200"
-        onError={(e) => {
-          if (e.currentTarget.dataset.fallbackApplied) return;
-          e.currentTarget.dataset.fallbackApplied = "1";
-          e.currentTarget.src = avatarFallback;
-        }}
-      />
-
-      <div className="min-w-0 flex-1">
-        <div className="font-semibold text-gray-900 truncate">{displayName}</div>
-        {/* optional status line if you have it */}
-        {typeof contact?.isOnline === "boolean" && (
-          <div className="text-xs text-gray-500">
-            {contact.isOnline ? "Online" : "Offline"}
+    <div className="sticky top-0 z-40 flex flex-col gap-2 p-4 border-b bg-white">
+      <div className="flex items-center gap-3">
+        {/* Sender profile */}
+        <img
+          src={senderProfile.photoURL}
+          alt={senderProfile.name}
+          className="w-8 h-8 rounded-full object-cover border border-gray-200"
+          onError={(e) => {
+            if (e.currentTarget.dataset.fallbackApplied) return;
+            e.currentTarget.dataset.fallbackApplied = "1";
+            e.currentTarget.src = avatarFallback;
+          }}
+        />
+        <div className="min-w-0">
+          <div className="font-semibold text-gray-900 truncate">
+            {senderProfile.name}
           </div>
+          <div className="text-xs text-gray-500 truncate">
+            {senderProfile.email}
+          </div>
+        </div>
+
+        <span className="mx-2 text-slate-400">→</span>
+
+        {/* Receiver profile */}
+        <img
+          src={receiverProfile.photoURL}
+          alt={receiverProfile.name}
+          className="w-8 h-8 rounded-full object-cover border border-gray-200"
+          onError={(e) => {
+            if (e.currentTarget.dataset.fallbackApplied) return;
+            e.currentTarget.dataset.fallbackApplied = "1";
+            e.currentTarget.src = avatarFallback;
+          }}
+        />
+        <div className="min-w-0">
+          <div className="font-semibold text-gray-900 truncate">
+            {receiverProfile.name}
+          </div>
+          <div className="text-xs text-gray-500 truncate">
+            {receiverProfile.email}
+          </div>
+        </div>
+      </div>
+
+      {/* Last conversation details */}
+      <div className="flex items-center gap-2 mt-1">
+        <span className="text-xs text-slate-500">Last message:</span>
+        <span className="text-sm text-slate-700 font-medium truncate">
+          {lastMsg}
+        </span>
+        {lastMsgTime && (
+          <span className="text-xs text-slate-400 ml-2 whitespace-nowrap">
+            {lastMsgTime}
+          </span>
         )}
       </div>
 
-      <div className="flex items-center gap-2">
+      {/* Actions + Menu */}
+      <div className="flex items-center gap-2 mt-1">
         <button
           title="Call"
           className="p-2 hover:bg-gray-100 rounded-full disabled:opacity-60"
@@ -234,7 +288,7 @@ export default function ChatAreaHeader({ contact }) {
           <img src={videoIcon} alt="Video" className="w-6 h-6" />
         </button>
 
-        <div className="relative" ref={menuRef}>
+        <div className="relative ml-auto" ref={menuRef}>
           <button
             title="More"
             className="p-2 hover:bg-gray-100 rounded-full disabled:opacity-60"
@@ -295,12 +349,11 @@ export default function ChatAreaHeader({ contact }) {
         </div>
       </div>
 
-      {/* ✅ Modal moved OUTSIDE the dropdown so it renders correctly */}
+      {/* Modal for contact info */}
       {showContact && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
           onMouseDown={(e) => {
-            // click outside closes
             if (e.target === e.currentTarget) handleCloseContact();
           }}
         >
@@ -347,4 +400,3 @@ export default function ChatAreaHeader({ contact }) {
     </div>
   );
 }
-

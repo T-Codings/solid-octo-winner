@@ -45,8 +45,8 @@ export default function ChatPage() {
 
   return (
     <div className="h-[calc(100vh-64px)] flex bg-white">
-      {/* Left */}
-      <Sidebar />
+      {/* Left: Sidebar only if no contact selected */}
+      {!selectedContact && <Sidebar />}
 
       {/* Right */}
       <div className="flex-1 flex flex-col">

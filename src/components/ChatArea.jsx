@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { addMessageToChat } from "../utils/addMessageToChat";
 import { useAuth } from "../context/AuthContext";
-import ChatAreaHeader from "./ChatAreaHeader";
+import ChatAreaHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 import useChatMessages from "./useChatMessages";
 
@@ -41,7 +41,16 @@ export default function ChatArea({ selectedContact }) {
         {loading ? (
           <div className="text-slate-400 text-center">Loading messages...</div>
         ) : messages.length === 0 ? (
-          <div className="text-slate-400 text-center">No messages yet.</div>
+          <div className="text-slate-400 text-center">
+            {selectedContact.lastMessage ? (
+              <>
+                <span className="block text-slate-700 font-medium">Last message:</span>
+                <span>{selectedContact.lastMessage}</span>
+              </>
+            ) : (
+              "No messages yet."
+            )}
+          </div>
         ) : (
           messages.map((msg) => (
             <div
