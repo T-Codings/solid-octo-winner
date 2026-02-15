@@ -1,69 +1,138 @@
-import React from "react";
-import { Link, useLocation } from "react-router-dom";
+// src/components/Sidebar.jsx
+import React, { useEffect, useMemo, useState } from "react";
+import { collection, doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { db } from "../firebaseConfig";
 import { useAuth } from "../context/AuthContext";
+import ContactList from "./ContactList";
+import { useNavigate } from "react-router-dom";
 
-export default function Sidebar() {
+import Chatties from "../assets/chatties.png";
+import MingcuteChat from "../assets/mingcutechat.png";
+import CreateNewChat from "../assets/Createnewchat.png";
+import { Search } from "lucide-react";
+
+function Sidebar() {
   const { currentUser } = useAuth();
-  const location = useLocation();
+  const navigate = useNavigate();
+
+  const [contacts, setContacts] = useState([]);
+  const [loadingContacts, setLoadingContacts] = useState(true);
+  const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    setLoadingContacts(true);
+    setError("");
+
+    const ref = collection(db, "contacts", currentUser.uid, "list");
+
+    const unsub = onSnapshot(
+      ref,
+      (snap) => {
+        const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        rows.sort((a, b) => {
+          const pinA = a.isPinned ? 1 : 0;
+          const pinB = b.isPinned ? 1 : 0;
+          if (pinB !== pinA) return pinB - pinA;
+          return (b.updatedAtMs || b.lastMessageAtMs || 0) - (a.updatedAtMs || a.lastMessageAtMs || 0);
+        });
+        setContacts(rows);
+        setLoadingContacts(false);
+      },
+      (err) => {
+        setError(err?.message || "Failed to load contacts.");
+        setLoadingContacts(false);
+      }
+    );
+
+    return () => unsub();
+  }, [currentUser]);
+
+  const filteredContacts = useMemo(() => {
+    const q = String(query || "").trim().toLowerCase();
+    if (!q) return contacts;
+
+    return contacts.filter((c) => {
+      const name = (
+        c.fullName ||
+        c.name ||
+        `${c.firstName || ""} ${c.lastName || ""}`
+      )
+        .trim()
+        .toLowerCase();
+
+      const email = String(c.email || "").toLowerCase();
+      const phone = String(c.phoneNumber || "").toLowerCase();
+
+      return name.includes(q) || email.includes(q) || phone.includes(q);
+    });
+  }, [contacts, query]);
+
+  // ✅ When a contact is clicked, go to chat route
+  const handleSelectContact = (c) => {
+    const contactId = c.id || c.uid; // doc id is usually the contact uid
+    if (!contactId) return;
+    navigate(`/chat/${contactId}`);
+  };
+
+  // ✅ Toggle pin and save to Firestore
+  const handleTogglePin = async (c) => {
+    if (!currentUser) return;
+    const contactId = c.id || c.uid;
+    if (!contactId) return;
+
+    try {
+      await updateDoc(doc(db, "contacts", currentUser.uid, "list", contactId), {
+        isPinned: !c.isPinned,
+      });
+    } catch (e) {
+      console.error("Failed to toggle pin:", e);
+    }
+  };
 
   return (
-    <aside className="sidebar bg-emerald-800 text-white flex flex-col h-full w-20 sm:w-56 shadow-lg">
-      <div className="flex flex-col items-center py-6">
-        <div className="rounded-full bg-emerald-600 w-12 h-12 flex items-center justify-center mb-4 shadow-md">
-          <span className="text-2xl font-bold">💬</span>
+    <div className="w-[340px] border-r border-gray-300 h-screen overflow-y-auto bg-white">
+      <div className="p-4">
+        <div className="flex items-center gap-2">
+          <img src={Chatties} alt="chatties" className="w-[100px] h-10 object-contain" />
+          <img src={MingcuteChat} alt="mingcute chat" className="w-10 h-7 object-contain" />
         </div>
-        <div className="w-full flex flex-col items-center mb-6">
-          <div className="rounded-full bg-white w-10 h-10 flex items-center justify-center mb-1">
-            <span className="text-emerald-700 font-bold text-lg">
-              {currentUser?.email ? currentUser.email[0].toUpperCase() : "U"}
-            </span>
+
+        <div className="mt-4 flex items-center gap-2">
+          <div className="flex-1 relative">
+            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search contacts, people..."
+              className="w-full h-10 pl-10 pr-3 rounded-xl bg-white border border-gray-300 text-gray-800
+                         placeholder:text-slate-500 placeholder:font-medium outline-none focus:ring-1 focus:ring-gray-300"
+            />
           </div>
-          <span className="text-xs font-medium truncate w-full text-center" title={currentUser?.email}>
-            {currentUser?.email || "User"}
-          </span>
+
+          <button
+            type="button"
+            className="shrink-0 w-10 h-10 rounded-xl hover:bg-gray-50 transition flex items-center justify-center"
+            title="Create new chat"
+            onClick={() => console.log("Create new chat clicked")}
+          >
+            <img src={CreateNewChat} alt="Create new chat" className="w-7 h-7 object-contain" />
+          </button>
         </div>
-        <nav className="flex flex-col gap-1 w-full">
-          <Link
-            to="/dashboard"
-            className={`sidebar-link ${location.pathname === "/dashboard" ? "bg-emerald-700" : "hover:bg-emerald-700/80"}`}
-            tabIndex={0}
-            aria-label="Dashboard"
-          >
-            <span className="mx-3">🏠</span>
-            <span className="hidden sm:inline">Dashboard</span>
-          </Link>
-          <Link
-            to="/contacts"
-            className={`sidebar-link ${location.pathname === "/contacts" ? "bg-emerald-700" : "hover:bg-emerald-700/80"}`}
-            tabIndex={0}
-            aria-label="Contacts"
-          >
-            <span className="mx-3">👥</span>
-            <span className="hidden sm:inline">Contacts</span>
-          </Link>
-          <Link
-            to="/profile"
-            className={`sidebar-link ${location.pathname === "/profile" ? "bg-emerald-700" : "hover:bg-emerald-700/80"}`}
-            tabIndex={0}
-            aria-label="Profile"
-          >
-            <span className="mx-3">👤</span>
-            <span className="hidden sm:inline">Profile</span>
-          </Link>
-          <Link
-            to="/settings"
-            className={`sidebar-link ${location.pathname === "/settings" ? "bg-emerald-700" : "hover:bg-emerald-700/80"}`}
-            tabIndex={0}
-            aria-label="Settings"
-          >
-            <span className="mx-3">⚙️</span>
-            <span className="hidden sm:inline">Settings</span>
-          </Link>
-        </nav>
       </div>
-      <div className="mt-auto mb-4 flex flex-col items-center">
-        <span className="text-xs text-slate-300">solid-octo-winner</span>
-      </div>
-    </aside>
+
+      {loadingContacts && <p className="p-4 text-slate-500 text-center">Loading...</p>}
+      {!loadingContacts && error && <p className="p-4 text-red-600 text-center">{error}</p>}
+
+      <ContactList
+        contacts={filteredContacts}
+        onSelectContact={handleSelectContact}
+        onTogglePin={handleTogglePin}
+      />
+    </div>
   );
 }
+
+export default Sidebar;

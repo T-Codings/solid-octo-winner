@@ -1,3 +1,4 @@
+// src/routes/Profile.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
@@ -14,6 +15,8 @@ import {
   Search,
   X,
 } from "lucide-react";
+
+// ✅ Full world country codes
 import { allCountries } from "country-telephone-data";
 
 function isoToFlag(iso2 = "") {
@@ -26,11 +29,23 @@ function isoToFlag(iso2 = "") {
   return String.fromCodePoint(first, second);
 }
 
+/**
+ * ✅ Build full COUNTRY_CODES safely
+ * Supports both possible shapes:
+ * - array tuples: [name, iso2, dialCode, ...]
+ * - objects: { name, iso2, dialCode }
+ */
 const COUNTRY_CODES = (Array.isArray(allCountries) ? allCountries : [])
   .map((c) => {
-    const name = c?.[0] || "";
-    const iso2 = (c?.[1] || "").toUpperCase();
-    const dial = c?.[2] ? `+${c[2]}` : "";
+    const name = String(c?.name || c?.[0] || "").trim();
+    const iso2 = String(c?.iso2 || c?.[1] || "").trim().toUpperCase();
+    const dialRaw = String(c?.dialCode || c?.[2] || "").trim();
+    const dial = dialRaw
+      ? dialRaw.startsWith("+")
+        ? dialRaw
+        : `+${dialRaw}`
+      : "";
+
     return { name, iso2, dial, flag: isoToFlag(iso2) };
   })
   .filter((c) => c.name && c.iso2 && c.dial)
@@ -327,8 +342,8 @@ export default function Profile() {
             </h1>
             <p className="mt-2 text-sm text-slate-300">
               Completion:{" "}
-              <span className="text-white font-semibold">{completion}%</span>
-              {" "}({completion === 75 ? "Completed" : "Fill 3 fields"})
+              <span className="text-white font-semibold">{completion}%</span>{" "}
+              ({completion === 75 ? "Completed" : "Fill 3 fields"})
             </p>
           </div>
 

@@ -1,7 +1,5 @@
-
 // src/components/ContactList.jsx
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 const Avatar = `${import.meta.env.BASE_URL}avatar.png`;
 
@@ -37,19 +35,19 @@ function rowKey(c, idx) {
   return String(c.uid || c.id || c.email || c.phoneNumber || idx);
 }
 
-function ContactRow({ c, idx, onSelectContact, onTogglePin }) {
+function ContactRow({ c, idx, onSelectContact, onOpenMenu }) {
   const uid = rowKey(c, idx);
   const title = pickName(c);
   const lastTimeMs = c.lastMessageAtMs || c.updatedAtMs || 0;
 
-  const navigate = useNavigate();
   return (
     <div
-      onClick={() => {
-        onSelectContact?.({ ...c, uid, id: c.id || uid });
-        navigate(`/chat/${c.id || uid}`);
+      onClick={() => onSelectContact?.({ ...c, uid, id: c.id || uid })}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        onOpenMenu?.(e.clientX, e.clientY, c);
       }}
-      className="flex items-center gap-3 p-3 cursor-pointer transition hover:bg-cyan-100/80"
+      className="flex items-center gap-3 p-3 cursor-pointer transition hover:bg-cyan-100/80 select-none"
     >
       <img
         src={c.photoURL || Avatar}
@@ -64,66 +62,92 @@ function ContactRow({ c, idx, onSelectContact, onTogglePin }) {
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0 flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-gray-900 truncate">{title}</h3>
-            {c.isPinned && (
-              <img
-                src={PinnedIcon}
-                alt="Pinned"
-                className="w-4 h-4 object-contain opacity-80 shrink-0"
-                title="Pinned"
-              />
-            )}
-          </div>
-
+          <h3 className="text-sm font-semibold text-gray-900 truncate">{title}</h3>
           <span className="text-xs text-slate-500 shrink-0">{fmtTime(lastTimeMs)}</span>
         </div>
 
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-xs text-slate-600 truncate">
-            {c.lastMessage ? c.lastMessage : "No messages yet"}
-          </p>
-
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onTogglePin?.(c);
-            }}
-            className="shrink-0 w-8 h-8 rounded-lg hover:bg-white/70 transition flex items-center justify-center"
-            title={c.isPinned ? "Unpin" : "Pin"}
-          >
-            <img
-              src={PinnedIcon}
-              alt="pin"
-              className={`w-4 h-4 object-contain ${c.isPinned ? "opacity-100" : "opacity-40"}`}
-            />
-          </button>
-        </div>
+        <p className="text-xs text-slate-600 truncate">
+          {c.lastMessage ? c.lastMessage : "No messages yet"}
+        </p>
       </div>
     </div>
   );
 }
 
 export default function ContactList({ contacts = [], onSelectContact, onTogglePin }) {
-  const pinnedContacts = contacts
-    .filter((c) => !!c.isPinned)
-    .slice()
-    .sort((a, b) => (b.updatedAtMs || b.lastMessageAtMs || 0) - (a.updatedAtMs || a.lastMessageAtMs || 0));
+  const pinnedContacts = useMemo(
+    () =>
+      contacts
+        .filter((c) => !!c.isPinned)
+        .slice()
+        .sort(
+          (a, b) =>
+            (b.updatedAtMs || b.lastMessageAtMs || 0) -
+            (a.updatedAtMs || a.lastMessageAtMs || 0)
+        ),
+    [contacts]
+  );
 
-  const allUnpinned = contacts
-    .filter((c) => !c.isPinned)
-    .slice()
-    .sort((a, b) => (b.updatedAtMs || b.lastMessageAtMs || 0) - (a.updatedAtMs || a.lastMessageAtMs || 0));
+  const allUnpinned = useMemo(
+    () =>
+      contacts
+        .filter((c) => !c.isPinned)
+        .slice()
+        .sort(
+          (a, b) =>
+            (b.updatedAtMs || b.lastMessageAtMs || 0) -
+            (a.updatedAtMs || a.lastMessageAtMs || 0)
+        ),
+    [contacts]
+  );
+
+  // ✅ WhatsApp/Discord style right-click menu state
+  const [menu, setMenu] = useState(null); // {x, y, contact}
+  const menuRef = useRef(null);
+
+  const openMenu = (x, y, contact) => {
+    const pad = 8;
+    const w = 200;
+    const h = 56;
+
+    const xx = Math.min(x, window.innerWidth - w - pad);
+    const yy = Math.min(y, window.innerHeight - h - pad);
+
+    setMenu({ x: xx, y: yy, contact });
+  };
+
+  // close menu on outside click / esc / scroll
+  useEffect(() => {
+    if (!menu) return;
+
+    const onDown = (e) => {
+      if (!menuRef.current) return;
+      if (!menuRef.current.contains(e.target)) setMenu(null);
+    };
+    const onKey = (e) => e.key === "Escape" && setMenu(null);
+    const onScroll = () => setMenu(null);
+
+    window.addEventListener("mousedown", onDown);
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("scroll", onScroll, true);
+
+    return () => {
+      window.removeEventListener("mousedown", onDown);
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("scroll", onScroll, true);
+    };
+  }, [menu]);
 
   return (
-    <div className="bg-white">
+    <div className="bg-white relative">
       {/* PINNED header (counted) */}
       <div className="px-3 pt-3">
         <div className="rounded-2xl bg-slate-100 p-2">
           <div className="flex items-center gap-3 px-3 py-2">
             <img src={PinnedIcon} alt="Pinned" className="w-5 h-5 object-contain" />
-            <span className="text-sm font-extrabold tracking-wide text-slate-900">PINNED</span>
+            <span className="text-sm font-extrabold tracking-wide text-slate-900">
+              PINNED
+            </span>
             <span className="ml-auto text-xs font-bold px-2 py-1 rounded-full bg-white shadow-sm text-slate-700">
               {pinnedContacts.length}
             </span>
@@ -143,7 +167,7 @@ export default function ContactList({ contacts = [], onSelectContact, onTogglePi
                 c={c}
                 idx={idx}
                 onSelectContact={onSelectContact}
-                onTogglePin={onTogglePin}
+                onOpenMenu={openMenu}
               />
             ))}
           </div>
@@ -177,12 +201,35 @@ export default function ContactList({ contacts = [], onSelectContact, onTogglePi
                 c={c}
                 idx={idx}
                 onSelectContact={onSelectContact}
-                onTogglePin={onTogglePin}
+                onOpenMenu={openMenu}
               />
             ))}
           </div>
         )}
       </div>
+
+      {/* ✅ Context Menu */}
+      {menu && (
+        <div className="fixed inset-0 z-[9999]" onContextMenu={(e) => e.preventDefault()}>
+          <div
+            ref={menuRef}
+            style={{ left: menu.x, top: menu.y }}
+            className="absolute w-[50px] rounded-xl border border-gray-200 bg-white shadow-xl overflow-hidden mt-3 ml-12"
+          >
+            <button
+              type="button"
+              onClick={() => {
+                onTogglePin?.(menu.contact);
+                setMenu(null);
+              }}
+              className="w-full px-4 py-3 text-left text-sm font-semibold hover:bg-gray-50 flex items-center justify-between"
+            >
+              {menu.contact?.isPinned ? "" : ""}
+              <img src={PinnedIcon} alt="pin" className="w-4 h-4 opacity-80" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
