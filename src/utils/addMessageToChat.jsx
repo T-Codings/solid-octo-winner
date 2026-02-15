@@ -1,7 +1,7 @@
 // src/utils/addMessageToChat.jsx
 import { addDoc, collection, doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebaseConfig";
-import { updateLastMessage } from "./updateLastMessage";
+import { updateLastMessage } from "./updateLastMessage.js";
 
 function getChatId(a, b) {
   return [a, b].sort().join("_");

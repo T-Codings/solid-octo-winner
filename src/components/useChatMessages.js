@@ -18,7 +18,9 @@ export default function useChatMessages(currentUser, contact) {
       return;
     }
     setLoading(true);
-    const chatId = getChatId(currentUser.uid, contact.uid);
+    // Use contact.uid or contact.id for chatId
+    const contactUid = contact.uid || contact.id;
+    const chatId = getChatId(currentUser.uid, contactUid);
     // Try to order by createdAtMs, fallback to createdAt if needed
     const q = query(
       collection(db, "chats", chatId, "messages"),
