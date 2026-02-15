@@ -1,14 +1,16 @@
 // src/components/ChatArea.jsx
-import React, { useEffect, useRef, useState } from "react";
 
+import React, { useState } from "react";
 import { addMessageToChat } from "../utils/addMessageToChat";
 import { useAuth } from "../context/AuthContext";
 import ChatAreaHeader from "./ChatAreaHeader";
 import MessageInput from "./MessageInput";
+import useChatMessages from "./useChatMessages";
 
 export default function ChatArea({ selectedContact }) {
   const { currentUser } = useAuth();
   const [sending, setSending] = useState(false);
+  const { messages, loading } = useChatMessages(currentUser, selectedContact);
 
   const handleSend = async (text) => {
     if (!currentUser || !selectedContact || !text.trim() || sending) return;
@@ -35,8 +37,24 @@ export default function ChatArea({ selectedContact }) {
   return (
     <div className="flex flex-col h-full">
       <ChatAreaHeader contact={selectedContact} />
-      <div className="flex-1 overflow-y-auto p-4">
-        {/* render messages here */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        {loading ? (
+          <div className="text-slate-400 text-center">Loading messages...</div>
+        ) : messages.length === 0 ? (
+          <div className="text-slate-400 text-center">No messages yet.</div>
+        ) : (
+          messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`max-w-[70%] px-4 py-2 rounded-xl shadow text-sm mb-1 ${msg.senderId === currentUser.uid ? "bg-emerald-100 ml-auto text-right" : "bg-white text-left"}`}
+            >
+              {msg.text}
+              <div className="text-xs text-slate-400 mt-1">
+                {msg.createdAtMs ? new Date(msg.createdAtMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
+              </div>
+            </div>
+          ))
+        )}
       </div>
       <MessageInput onSend={handleSend} disabled={sending} />
     </div>
