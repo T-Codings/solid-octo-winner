@@ -329,7 +329,7 @@ export default function Profile() {
   if (authLoading || fetching) {
     return (
       <div className="min-h-screen relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950" />
+        {/* Gradient background removed */}
         <div className="relative z-10 min-h-screen flex items-center justify-center">
           <div className="flex flex-col items-center gap-3 text-slate-200">
             <Loader2 className="w-8 h-8 animate-spin" />
@@ -342,7 +342,7 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950" />
+      {/* Gradient background removed */}
       <div className="absolute inset-0 opacity-[0.08] bg-[radial-gradient(circle_at_1px_1px,#fff_1px,transparent_0)] [background-size:22px_22px]" />
 
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-10">
