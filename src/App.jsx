@@ -30,10 +30,10 @@ function App() {
       <Navbar />
 
       <Routes>
-        {/* Home / Landing */}
+        {/* Home / Landing: Always show landing page */}
         <Route
           path="/"
-          element={currentUser ? <Navigate to={goAfterAuth} replace /> : <Landing />}
+          element={<Landing />}
         />
 
         {/* Login */}

@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import pinnedIcon from "../assets/pinned.png";
-import { db } from "../firebaseConfig";
+import { db } from "../firebaseconfig";
 import { doc, deleteDoc, updateDoc } from "firebase/firestore";
 import { addMessageToChat } from "../utils/addMessageToChat";
 import { useAuth } from "../context/AuthContext";
@@ -176,17 +176,28 @@ export default function ChatArea({ selectedContact }) {
                   <img src={pinnedIcon} alt="Pinned" className="w-5 h-5" style={{marginRight: 6}} />
                   <span>Pinned Messages</span>
                 </div>
-                <div className="space-y-2">
-                  {messages.filter(msg => pinnedMsgIds.includes(msg.id)).map((msg) => (
-                    <div
-                      key={msg.id}
-                      className="break-words px-4 py-2 bg-yellow-50 text-gray-900 rounded text-[16px]"
-                      style={{ maxWidth: '650px', wordBreak: 'break-word', overflowWrap: 'break-word', boxShadow: '0 1px 4px 0 rgba(0,0,0,0.04)' }}
-                    >
-                      {msg.text}
-                      {reactions[msg.id] && <span className="ml-2 text-xl">{reactions[msg.id]}</span>}
-                    </div>
-                  ))}
+                <div className="space-y-2 max-w-full">
+                    {messages.filter(msg => pinnedMsgIds.includes(msg.id)).map((msg) => (
+                      <div
+                        key={msg.id}
+                        className="break-words px-4 py-2  text-gray-900 rounded text-[16px] max-w-full"
+                        style={{ wordBreak: 'break-word', overflowWrap: 'break-word', boxShadow: '0 1px 4px 0 rgba(0,0,0,0.04)' }}
+                        onDoubleClick={e => {
+                          if (!multiSelectMode) {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setMenu({
+                              visible: true,
+                              x: e.clientX - rect.left,
+                              y: e.clientY - rect.top,
+                              msg,
+                            });
+                          }
+                        }}
+                      >
+                        {msg.text}
+                        {reactions[msg.id] && <span className="ml-2 text-xl">{reactions[msg.id]}</span>}
+                      </div>
+                    ))}
                 </div>
               </div>
             )}
@@ -304,26 +315,33 @@ export default function ChatArea({ selectedContact }) {
             {/* Popup menu */}
             {menu.visible && (
               <div
-                className="absolute z-50 bg-white border border-gray-300 rounded-lg shadow-lg py-2 px-0 min-w-[180px]"
-                style={{ left: menu.x, top: menu.y }}
+                className="absolute bg-white border border-gray-200 rounded-lg py-2 px-0 min-w-[120px]"
+                style={{ left: menu.x, top: menu.y, background: '#fff', boxShadow: '0 4px 24px 0 rgba(37,99,235,0.10)' }}
               >
-                <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("copy", menu.msg)}>Copy</button>
-                <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("reply", menu.msg)}>Reply</button>
-                <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("forward", menu.msg)}>Forward</button>
-                {menu.msg.senderId === currentUser.uid && (
+                {pinnedMsgIds.includes(menu.msg.id) && (
+                  <button className=" text-left px-4 py-2 bg-white text-red-600 " onClick={() => handleMenuAction("pin", menu.msg)}>Unpin</button>
+                )}
+                {!pinnedMsgIds.includes(menu.msg.id) && (
                   <>
-                    <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("edit", menu.msg)}>Edit</button>
-                    <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("delete", menu.msg)}>Delete</button>
+                    <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("copy", menu.msg)}>Copy</button>
+                    <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("reply", menu.msg)}>Reply</button>
+                    <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("forward", menu.msg)}>Forward</button>
+                    {menu.msg.senderId === currentUser.uid && (
+                      <>
+                        <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("edit", menu.msg)}>Edit</button>
+                        <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("delete", menu.msg)}>Delete</button>
+                      </>
+                    )}
+                    <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("pin", menu.msg)}>Pin message</button>
+                    <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("react", menu.msg)}>React with emoji</button>
+                    <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("unread", menu.msg)}>{unreadMsgIds.includes(menu.msg.id) ? "Mark as read" : "Mark as unread"}</button>
+                    {!multiSelectMode && (
+                      <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("select", menu.msg)}>Select multiple</button>
+                    )}
+                    {multiSelectMode && (
+                      <button className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600" onClick={() => handleMenuAction("exit-multiselect")}>Exit multi-select</button>
+                    )}
                   </>
-                )}
-                <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("pin", menu.msg)}>{pinnedMsgIds.includes(menu.msg.id) ? "Unpin" : "Pin"} message</button>
-                <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("react", menu.msg)}>React with emoji</button>
-                <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("unread", menu.msg)}>{unreadMsgIds.includes(menu.msg.id) ? "Mark as read" : "Mark as unread"}</button>
-                {!multiSelectMode && (
-                  <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("select", menu.msg)}>Select multiple</button>
-                )}
-                {multiSelectMode && (
-                  <button className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600" onClick={() => handleMenuAction("exit-multiselect")}>Exit multi-select</button>
                 )}
               </div>
             )}
@@ -334,3 +352,8 @@ export default function ChatArea({ selectedContact }) {
     </div>
   );
 }
+    
+
+
+
+
