@@ -45,10 +45,9 @@ function Login() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Gradient background removed */}
-      <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-cyan-500/20 blur-3xl" />
-      <div className="absolute -bottom-24 -right-24 w-[28rem] h-[28rem] rounded-full bg-emerald-500/20 blur-3xl" />
-      <div className="absolute inset-0 opacity-[0.08] bg-[radial-gradient(circle_at_1px_1px,#fff_1px,transparent_0)] [background-size:22px_22px]" />
+      <div className="absolute inset-0 bg-gray-900" />
+      
+      
 
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-md">

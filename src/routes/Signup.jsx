@@ -75,11 +75,8 @@ function Signup() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Gradient background removed */}
-      <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-cyan-500/20 blur-3xl" />
-      <div className="absolute -bottom-24 -right-24 w-[28rem] h-[28rem] rounded-full bg-emerald-500/20 blur-3xl" />
-      <div className="absolute inset-0 opacity-[0.08] bg-[radial-gradient(circle_at_1px_1px,#fff_1px,transparent_0)] [background-size:22px_22px]" />
+    <div className="min-h-screen bg-gray-900 relative overflow-hidden">
+      
 
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-md">
@@ -201,7 +198,7 @@ function Signup() {
               <button
                 type="submit"
                 disabled={loading || passwordMismatch}
-                className="w-full rounded-2xl py-4 text-base sm:text-lg font-semibold text-white bg-gradient-to-r from-emerald-500 via-cyan-500 to-indigo-600 shadow-lg shadow-emerald-500/10 hover:opacity-95 active:scale-[0.99] transition disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full rounded-2xl py-4 text-base sm:text-lg font-semibold text-white bg-emerald-600 shadow-lg hover:opacity-95 active:scale-[0.99] transition disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {loading ? "Creating account..." : "Create account"}
               </button>

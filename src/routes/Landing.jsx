@@ -66,18 +66,15 @@ export default function Landing() {
   ];
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Background like SignUp */}
-      {/* Gradient background removed */}
-      <div className="absolute inset-0 opacity-[0.08] bg-[radial-gradient(circle_at_1px_1px,#fff_1px,transparent_0)] [background-size:22px_22px]" />
+    <div className="min-h-screen bg-gray-900 relative overflow-hidden">
 
       <div className="relative z-10">
         <div className="min-h-screen flex items-center justify-center px-4 py-12">
           <div className="w-full max-w-6xl">
             {/* Header */}
-            <div className="text-center mb-12">
-              <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/10 backdrop-blur border border-white/10 flex items-center justify-center shadow-lg overflow-hidden">
-                <img src={MingCuteChat} alt="Chat Icon" className="w-[30px] h-[40px] sm:w-14 sm:h-14" />
+            <div className="text-center mb-4">
+              <div className="mx-auto w-8 h-8 sm:w-12 sm:h-12 rounded-xl bg-white/10 backdrop-blur border border-white/10 flex items-center justify-center shadow-lg overflow-hidden">
+                <img src={MingCuteChat} alt="Chat Icon" className="w-6 h-6 sm:w-10 sm:h-10" />
               </div>
 
               <h1 className="mt-6 text-4xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight">
@@ -94,7 +91,7 @@ export default function Landing() {
               <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link
                   to="/signup"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl px-7 py-4 text-base sm:text-lg font-semibold text-white bg-gradient-to-r from-emerald-500 via-cyan-500 to-indigo-600 shadow-lg shadow-emerald-500/10 hover:opacity-95 active:scale-[0.99] transition"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl px-7 py-4 text-base sm:text-lg font-semibold text-white bg-emerald-600 shadow-lg hover:opacity-95 active:scale-[0.99] transition"
                 >
                   Get Started for Free <ArrowRight className="w-5 h-5" />
                 </Link>
