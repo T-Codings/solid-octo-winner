@@ -13,7 +13,8 @@ import {
   Sparkles,
   CheckCircle2,
 } from "lucide-react";
-import ChatIcon from "../assets/ChatIcon.jpg";
+
+import MingCuteChat from "../assets/mingcutechat.jpg";
 
 export default function Landing() {
   const features = [
@@ -76,7 +77,7 @@ export default function Landing() {
             {/* Header */}
             <div className="text-center mb-12">
               <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/10 backdrop-blur border border-white/10 flex items-center justify-center shadow-lg overflow-hidden">
-                <img src={ChatIcon} alt="Chat Icon" className="w-12 h-12 sm:w-14 sm:h-14" />
+                <img src={MingCuteChat} alt="Chat Icon" className="w-12 h-12 sm:w-14 sm:h-14" />
               </div>
 
               <h1 className="mt-6 text-4xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight">
