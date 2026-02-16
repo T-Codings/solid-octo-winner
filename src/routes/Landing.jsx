@@ -13,7 +13,7 @@ import {
   Sparkles,
   CheckCircle2,
 } from "lucide-react";
-import ChatIcon from "../assets/ChatIcon.png";
+import ChatIcon from "../assets/ChatIcon.jpg";
 
 export default function Landing() {
   const features = [

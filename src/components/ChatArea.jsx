@@ -352,6 +352,19 @@ export default function ChatArea({ selectedContact }) {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+//git add .
+//git commit -am "files edited"
+//git push
     
 
 
