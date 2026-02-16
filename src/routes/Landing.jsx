@@ -1,3 +1,4 @@
+
 // src/routes/Landing.jsx
 import React from "react";
 import { Link } from "react-router-dom";
@@ -91,7 +92,7 @@ export default function Landing() {
               <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link
                   to="/signup"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl px-7 py-4 text-base sm:text-lg font-semibold text-white bg-emerald-600 shadow-lg hover:opacity-95 active:scale-[0.99] transition"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl px-7 py-4 text-base sm:text-lg font-semibold text-white bg-gradient-to-r from-emerald-500 via-cyan-500 to-indigo-600 shadow-lg shadow-emerald-500/10 hover:opacity-95 active:scale-[0.99] transition"
                 >
                   Get Started for Free <ArrowRight className="w-5 h-5" />
                 </Link>
