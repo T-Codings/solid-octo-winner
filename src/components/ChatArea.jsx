@@ -1,9 +1,12 @@
 // src/components/ChatArea.jsx
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import pinnedIcon from "../assets/pinned.png";
+import { db } from "../firebaseConfig";
+import { doc, deleteDoc, updateDoc } from "firebase/firestore";
 import { addMessageToChat } from "../utils/addMessageToChat";
 import { useAuth } from "../context/AuthContext";
-import ChatAreaHeader from "./ChatHeader";
+import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 import useChatMessages from "./useChatMessages";
 
@@ -11,6 +14,17 @@ export default function ChatArea({ selectedContact }) {
   const { currentUser } = useAuth();
   const [sending, setSending] = useState(false);
   const { messages, loading } = useChatMessages(currentUser, selectedContact);
+  const [menu, setMenu] = useState({ visible: false, x: 0, y: 0, msg: null });
+  const [editingMsgId, setEditingMsgId] = useState(null);
+  const [editText, setEditText] = useState("");
+  const [replyMsg, setReplyMsg] = useState(null);
+  const [pinnedMsgIds, setPinnedMsgIds] = useState([]);
+  const [reactingMsgId, setReactingMsgId] = useState(null);
+  const [reactions, setReactions] = useState({});
+  const [unreadMsgIds, setUnreadMsgIds] = useState([]);
+  const [selectedMsgIds, setSelectedMsgIds] = useState([]);
+  const [multiSelectMode, setMultiSelectMode] = useState(false);
+  const chatAreaRef = useRef(null);
 
   const handleSend = async (text) => {
     if (!currentUser || !selectedContact || !text.trim() || sending) return;
@@ -34,35 +48,286 @@ export default function ChatArea({ selectedContact }) {
     );
   }
 
+  // Menu actions
+  const handleMenuAction = async (action, msg) => {
+    setMenu({ ...menu, visible: false });
+    if (action === "copy") {
+      if (multiSelectMode && selectedMsgIds.length > 0) {
+        const texts = messages.filter(m => selectedMsgIds.includes(m.id)).map(m => m.text).join("\n");
+        navigator.clipboard.writeText(texts);
+      } else {
+        navigator.clipboard.writeText(msg.text);
+      }
+    } else if (action === "reply") {
+      setReplyMsg(msg);
+    } else if (action === "forward") {
+      // Forward: send as new message(s) from current user
+      if (!currentUser || !selectedContact) return;
+      if (multiSelectMode && selectedMsgIds.length > 0) {
+        for (const id of selectedMsgIds) {
+          const m = messages.find(m => m.id === id);
+          if (m) await addMessageToChat(currentUser, selectedContact, m.text);
+        }
+      } else {
+        await addMessageToChat(currentUser, selectedContact, msg.text);
+      }
+      setMultiSelectMode(false);
+      setSelectedMsgIds([]);
+    } else if (action === "delete") {
+      if (!currentUser || !selectedContact) return;
+      const chatId = [currentUser.uid, selectedContact.uid].sort().join("_");
+      if (multiSelectMode && selectedMsgIds.length > 0) {
+        for (const id of selectedMsgIds) {
+          const m = messages.find(m => m.id === id);
+          if (m && m.senderId === currentUser.uid) {
+            await deleteDoc(doc(db, "chats", chatId, "messages", id));
+          }
+        }
+        setSelectedMsgIds([]);
+        setMultiSelectMode(false);
+      } else if (msg.senderId === currentUser.uid) {
+        await deleteDoc(doc(db, "chats", chatId, "messages", msg.id));
+      }
+    } else if (action === "edit") {
+      if (msg.senderId !== currentUser.uid) return;
+      setEditingMsgId(msg.id);
+      setEditText(msg.text);
+    } else if (action === "pin") {
+      if (multiSelectMode && selectedMsgIds.length > 0) {
+        setPinnedMsgIds((ids) => {
+          let newIds = [...ids];
+          // If all selected are already pinned, unpin all; else, pin all
+          const allPinned = selectedMsgIds.every(id => ids.includes(id));
+          if (allPinned) {
+            newIds = newIds.filter(id => !selectedMsgIds.includes(id));
+          } else {
+            selectedMsgIds.forEach(id => {
+              if (!newIds.includes(id)) newIds.push(id);
+            });
+          }
+          return newIds;
+        });
+      } else {
+        setPinnedMsgIds((ids) => ids.includes(msg.id)
+          ? ids.filter(id => id !== msg.id)
+          : [...ids, msg.id]);
+      }
+    } else if (action === "react") {
+      setReactingMsgId(msg.id);
+    } else if (action === "unread") {
+      if (multiSelectMode && selectedMsgIds.length > 0) {
+        setUnreadMsgIds((ids) => {
+          const newIds = [...ids];
+          selectedMsgIds.forEach(id => {
+            if (!newIds.includes(id)) newIds.push(id);
+          });
+          return newIds;
+        });
+      } else {
+        setUnreadMsgIds((ids) => ids.includes(msg.id) ? ids.filter(id => id !== msg.id) : [...ids, msg.id]);
+      }
+    } else if (action === "select") {
+      setMultiSelectMode(true);
+      setSelectedMsgIds([msg.id]);
+    } else if (action === "exit-multiselect") {
+      setMultiSelectMode(false);
+      setSelectedMsgIds([]);
+    }
+  };
+
+  const handleReact = (msgId, emoji) => {
+    setReactions((prev) => ({ ...prev, [msgId]: emoji }));
+    setReactingMsgId(null);
+  };
+
+  const handleEditSave = async (msg) => {
+    if (!currentUser || !selectedContact) return;
+    const chatId = [currentUser.uid, selectedContact.uid].sort().join("_");
+    await updateDoc(doc(db, "chats", chatId, "messages", msg.id), { text: editText });
+    setEditingMsgId(null);
+  };
+
+  // Hide menu on click outside
+  React.useEffect(() => {
+    if (!menu.visible) return;
+    const handler = (e) => {
+      if (chatAreaRef.current && !chatAreaRef.current.contains(e.target)) {
+        setMenu({ ...menu, visible: false });
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [menu]);
+
   return (
-    <div className="flex flex-col h-full">
-      <ChatAreaHeader contact={selectedContact} />
-      <div className="flex-1 overflow-y-auto p-4 space-y-2">
+    <div className="flex flex-col h-full" ref={chatAreaRef}>
+      <ChatHeader contact={selectedContact} />
+      <div className="flex-1 overflow-y-auto p-4 space-y-2 relative">
         {loading ? (
           <div className="text-slate-400 text-center">Loading messages...</div>
         ) : messages.length === 0 ? (
-          <div className="text-slate-400 text-center">
-            {selectedContact.lastMessage ? (
-              <>
-                <span className="block text-slate-700 font-medium">Last message:</span>
-                <span>{selectedContact.lastMessage}</span>
-              </>
-            ) : (
-              "No messages yet."
-            )}
-          </div>
+          null
         ) : (
-          messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`max-w-[70%] px-4 py-2 rounded-xl shadow text-sm mb-1 ${msg.senderId === currentUser.uid ? "bg-emerald-100 ml-auto text-right" : "bg-white text-left"}`}
-            >
-              {msg.text}
-              <div className="text-xs text-slate-400 mt-1">
-                {msg.createdAtMs ? new Date(msg.createdAtMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
+          <>
+            {/* Pinned messages section */}
+            {pinnedMsgIds.length > 0 && (
+              <div className="mb-4 rounded-lg p-2">
+                <div className="font-semibold mb-2 flex items-center gap-2">
+                  <img src={pinnedIcon} alt="Pinned" className="w-5 h-5" style={{marginRight: 6}} />
+                  <span>Pinned Messages</span>
+                </div>
+                <div className="space-y-2">
+                  {messages.filter(msg => pinnedMsgIds.includes(msg.id)).map((msg) => (
+                    <div
+                      key={msg.id}
+                      className="break-words px-4 py-2 bg-yellow-50 text-gray-900 rounded text-[16px]"
+                      style={{ maxWidth: '650px', wordBreak: 'break-word', overflowWrap: 'break-word', boxShadow: '0 1px 4px 0 rgba(0,0,0,0.04)' }}
+                    >
+                      {msg.text}
+                      {reactions[msg.id] && <span className="ml-2 text-xl">{reactions[msg.id]}</span>}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))
+            )}
+            {/* Regular (unpinned) messages */}
+            {messages.filter(msg => !pinnedMsgIds.includes(msg.id)).map((msg) => {
+              const isSender = msg.senderId === currentUser.uid;
+              const profile = isSender
+                ? {
+                    name: currentUser.displayName || currentUser.fullName || "Me",
+                    photoURL: currentUser.photoURL || undefined,
+                  }
+                : {
+                    name: selectedContact.displayName || selectedContact.fullName || selectedContact.name || "Contact",
+                    photoURL: selectedContact.photoURL || undefined,
+                  };
+              const pinned = false;
+              const unread = unreadMsgIds.includes(msg.id);
+              return (
+                <div
+                  key={msg.id}
+                  className={`flex items-end ${isSender ? "justify-end" : "justify-start"} ${pinned ? "ring-2 ring-yellow-400" : ""} ${unread ? "bg-yellow-50" : ""}`}
+                        onDoubleClick={(e) => {
+                          if (!multiSelectMode) {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setMenu({
+                              visible: true,
+                              x: e.clientX - rect.left,
+                              y: e.clientY - rect.top,
+                              msg,
+                            });
+                          }
+                        }}
+                  onClick={() => {
+                    if (multiSelectMode) {
+                      setSelectedMsgIds(ids => ids.includes(msg.id) ? ids.filter(id => id !== msg.id) : [...ids, msg.id]);
+                    }
+                  }}
+                >
+                  {multiSelectMode && (
+                    <input
+                      type="checkbox"
+                      checked={selectedMsgIds.includes(msg.id)}
+                      onChange={() => setSelectedMsgIds(ids => ids.includes(msg.id) ? ids.filter(id => id !== msg.id) : [...ids, msg.id])}
+                      className="mr-2 mt-6"
+                      onClick={e => e.stopPropagation()}
+                    />
+                  )}
+                  {!isSender && (
+                    <img
+                      src={profile.photoURL}
+                      alt={profile.name}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 mr-2 mb-6"
+                      style={{ alignSelf: "flex-start" }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  )}
+                  <div className="flex flex-col items-end">
+                    <div className={`flex items-center gap-2 text-xs text-slate-400 mb-1 ${isSender ? "justify-end" : "justify-start"}`}>
+                      <span>
+                        {msg.createdAtMs
+                          ? new Date(msg.createdAtMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                          : ""}
+                      </span>
+                      <span className="text-slate-700 font-semibold">{profile.name}</span>
+                      {unread && <span className="ml-1 text-yellow-600">• Unread</span>}
+                    </div>
+                    {editingMsgId === msg.id ? (
+                      <div className="flex gap-2 items-center">
+                        <input
+                          className="border rounded px-2 py-1 text-sm"
+                          value={editText}
+                          onChange={e => setEditText(e.target.value)}
+                          autoFocus
+                        />
+                        <button className="text-emerald-600 font-bold" onClick={() => handleEditSave(msg)}>Save</button>
+                        <button className="text-gray-500" onClick={() => setEditingMsgId(null)}>Cancel</button>
+                      </div>
+                    ) : (
+                      <div
+                        className={`break-words px-4 py-2 rounded-xl shadow text-[16px] ${isSender ? "bg-sky-500 text-right text-white" : "bg-white text-left text-[16px] text-gray-800"}`}
+                        style={{ maxWidth: '650px', wordBreak: 'break-word', overflowWrap: 'break-word' }}
+                      >
+                        {msg.text}
+                        {reactions[msg.id] && <span className="ml-2 text-xl">{reactions[msg.id]}</span>}
+                        {replyMsg && replyMsg.id === msg.id && (
+                          <span className="ml-2 text-xs text-emerald-600">(Replying)</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {isSender && (
+                    <img
+                      src={profile.photoURL}
+                      alt={profile.name}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 ml-2 mb-6"
+                      style={{ alignSelf: "flex-start" }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  )}
+                  {/* Emoji picker for react */}
+                  {reactingMsgId === msg.id && (
+                    <div className="absolute z-50 bg-white border border-gray-200 rounded-xl shadow-lg p-2 flex flex-wrap gap-2 w-64">
+                      {["😀","😂","😍","👍","🙏","🎉","❤️","🔥","🥳","😢","😡","😎","😇","🤔","😏","😬","😱","😴","🤩","😜","🤪","😕","😒","😓","😔","😲","😖","😭","😤","😡","😠","🤬","😷","🤒","🤕","🤢","🤮","🤧","🥳","🥺","🤠","🤡","🤥","🤫","🤭","🧐","🤓","😈","👿","👹","👺","💀","👻","👽","🤖","💩"].map(e=>(
+                        <button key={e} className="text-2xl p-1 hover:bg-gray-100 rounded" onClick={()=>handleReact(msg.id,e)}>{e}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {/* Popup menu */}
+            {menu.visible && (
+              <div
+                className="absolute z-50 bg-white border border-gray-300 rounded-lg shadow-lg py-2 px-0 min-w-[180px]"
+                style={{ left: menu.x, top: menu.y }}
+              >
+                <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("copy", menu.msg)}>Copy</button>
+                <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("reply", menu.msg)}>Reply</button>
+                <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("forward", menu.msg)}>Forward</button>
+                {menu.msg.senderId === currentUser.uid && (
+                  <>
+                    <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("edit", menu.msg)}>Edit</button>
+                    <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("delete", menu.msg)}>Delete</button>
+                  </>
+                )}
+                <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("pin", menu.msg)}>{pinnedMsgIds.includes(menu.msg.id) ? "Unpin" : "Pin"} message</button>
+                <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("react", menu.msg)}>React with emoji</button>
+                <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("unread", menu.msg)}>{unreadMsgIds.includes(menu.msg.id) ? "Mark as read" : "Mark as unread"}</button>
+                {!multiSelectMode && (
+                  <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("select", menu.msg)}>Select multiple</button>
+                )}
+                {multiSelectMode && (
+                  <button className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600" onClick={() => handleMenuAction("exit-multiselect")}>Exit multi-select</button>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
       <MessageInput onSend={handleSend} disabled={sending} />

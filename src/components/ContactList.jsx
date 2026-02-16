@@ -52,7 +52,7 @@ function ContactRow({ c, idx, onSelectContact, onOpenMenu }) {
       <img
         src={c.photoURL || Avatar}
         alt={title}
-        className="w-12 h-12 rounded-full object-cover border border-black/10"
+        className="w-12 h-12 rounded-full object-cover border-2 border-gray-300"
         onError={(e) => {
           if (e.currentTarget.dataset.fallbackApplied) return;
           e.currentTarget.dataset.fallbackApplied = "1";

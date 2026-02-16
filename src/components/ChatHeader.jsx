@@ -1,40 +1,34 @@
-// src/chats/ChatAreaHeader.jsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import {
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  setDoc,
-  writeBatch,
-  serverTimestamp,
-} from "firebase/firestore";
-import { db } from "../firebaseConfig";
-import { useAuth } from "../context/AuthContext";
 
+
+
+import React, { useMemo, useState, useRef, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
+import { doc, collection, getDocs, writeBatch, deleteDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "../firebaseConfig";
 import phoneIcon from "../assets/phonefill.png";
 import videoIcon from "../assets/majesticonsvideo.png";
 import moreIcon from "../assets/more2fill.png";
-
-function safeName(c) {
-  const full =
-    c?.fullName ||
-    c?.name ||
-    `${c?.firstName || ""} ${c?.lastName || ""}`.trim() ||
-    c?.email ||
-    "Unknown";
-  return full || "Unknown";
+import onlineIndicator from "../assets/Rectangle6.png";
+// Local safeName utility (not exported from updateLastMessage.js)
+function safeName(u) {
+  return (
+    u?.fullName ||
+    u?.name ||
+    [u?.firstName, u?.lastName].filter(Boolean).join(" ") ||
+    (u?.email ? u.email.split("@")[0] : "") ||
+    "User"
+  );
 }
-
+// buildChatId utility
 function buildChatId(a, b) {
-  return [a, b].filter(Boolean).sort().join("_");
+  return [a, b].sort().join("_");
 }
+
+
 
 export default function ChatAreaHeader({ contact }) {
   const { currentUser } = useAuth();
-
   if (!contact) return null;
-
   const avatarFallback = `${import.meta.env.BASE_URL}avatar.png`;
   const displayName = useMemo(() => safeName(contact), [contact]);
 
@@ -42,31 +36,8 @@ export default function ChatAreaHeader({ contact }) {
   const contactUid = contact?.uid || contact?.id || "";
   const myUid = currentUser?.uid || "";
 
-  // Last conversation details
-  const lastMsg = contact.lastMessage || "No messages yet.";
-  const lastMsgTime = contact.lastMessageAtMs
-    ? new Date(contact.lastMessageAtMs).toLocaleString()
-    : "";
-
-  // Sender: currentUser, Receiver: contact
-  const senderProfile = {
-    name:
-      currentUser?.displayName ||
-      currentUser?.fullName ||
-      currentUser?.email ||
-      "Me",
-    photoURL: currentUser?.photoURL || avatarFallback,
-    email: currentUser?.email || "",
-  };
-
-  const receiverProfile = {
-    name: displayName,
-    photoURL: contact.photoURL || avatarFallback,
-    email: contact.email || "",
-  };
-
   const [menuOpen, setMenuOpen] = useState(false);
-  const [muted, setMuted] = useState(!!contact?.muted);
+  const [muted, setMuted] = useState(!!contact?.muted); // optional field from firestore
   const [showContact, setShowContact] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -181,8 +152,10 @@ export default function ChatAreaHeader({ contact }) {
     setShowContact(false);
   }
 
+  // ✅ persist mute to contacts list (optional, but recommended)
   async function handleMute() {
     if (!myUid || !contactUid) {
+      // fallback to local only
       setMuted((m) => !m);
       setMenuOpen(false);
       return;
@@ -193,7 +166,10 @@ export default function ChatAreaHeader({ contact }) {
     setMenuOpen(false);
 
     try {
+      // Path you use elsewhere: contacts/{uid}/list/{contactUid}
       const ref = doc(db, "contacts", myUid, "list", contactUid);
+
+      // Use setDoc merge so you don't accidentally wipe the contact document
       await setDoc(
         ref,
         {
@@ -205,6 +181,7 @@ export default function ChatAreaHeader({ contact }) {
       );
     } catch (e) {
       console.error("Mute update failed:", e);
+      // revert local state if you want
       setMuted((m) => !m);
       alert(e?.message || "Failed to update mute.");
     }
@@ -212,66 +189,38 @@ export default function ChatAreaHeader({ contact }) {
 
   return (
     // ✅ STICKY HEADER
-    <div className="sticky top-0 z-40 flex flex-col gap-2 p-4 border-b bg-white">
-      <div className="flex items-center gap-3">
-        {/* Sender profile */}
+    <div className="sticky top-0 z-40 flex items-center gap-3 p-4 font-semibold border-b bg-white">
+      <div className="relative">
         <img
-          src={senderProfile.photoURL}
-          alt={senderProfile.name}
-          className="w-8 h-8 rounded-full object-cover border border-gray-200"
+          src={contact.photoURL || avatarFallback}
+          alt={displayName}
+          className="w-10 h-10 rounded-full object-cover border-2 border-gray-300"
           onError={(e) => {
             if (e.currentTarget.dataset.fallbackApplied) return;
             e.currentTarget.dataset.fallbackApplied = "1";
             e.currentTarget.src = avatarFallback;
           }}
         />
-        <div className="min-w-0">
-          <div className="font-semibold text-gray-900 truncate">
-            {senderProfile.name}
-          </div>
-          <div className="text-xs text-gray-500 truncate">
-            {senderProfile.email}
-          </div>
-        </div>
-
-        <span className="mx-2 text-slate-400">→</span>
-
-        {/* Receiver profile */}
+        {/* Online indicator */}
         <img
-          src={receiverProfile.photoURL}
-          alt={receiverProfile.name}
-          className="w-8 h-8 rounded-full object-cover border border-gray-200"
-          onError={(e) => {
-            if (e.currentTarget.dataset.fallbackApplied) return;
-            e.currentTarget.dataset.fallbackApplied = "1";
-            e.currentTarget.src = avatarFallback;
-          }}
+          src={onlineIndicator}
+          alt="Online"
+          className="absolute bottom-0 text-sky-500 right-0 w-4 h-4"
+          style={{ borderRadius: '50%', border: '2px solid white', background: 'white' }}
         />
-        <div className="min-w-0">
-          <div className="font-semibold text-gray-900 truncate">
-            {receiverProfile.name}
-          </div>
-          <div className="text-xs text-gray-500 truncate">
-            {receiverProfile.email}
-          </div>
-        </div>
       </div>
 
-      {/* Last conversation details */}
-      <div className="flex items-center gap-2 mt-1">
-        <span className="text-xs text-slate-500">Last message:</span>
-        <span className="text-sm text-slate-700 font-medium truncate">
-          {lastMsg}
-        </span>
-        {lastMsgTime && (
-          <span className="text-xs text-slate-400 ml-2 whitespace-nowrap">
-            {lastMsgTime}
-          </span>
+      <div className="min-w-0 flex-1">
+        <div className="font-semibold text-gray-900 truncate">{displayName}</div>
+        {/* optional status line if you have it */}
+        {typeof contact?.isOnline === "boolean" && (
+          <div className="text-xs text-gray-500 text-sky-500">
+            {contact.isOnline ? "Online" : "Offline"}
+          </div>
         )}
       </div>
 
-      {/* Actions + Menu */}
-      <div className="flex items-center gap-2 mt-1">
+      <div className="flex items-center gap-2">
         <button
           title="Call"
           className="p-2 hover:bg-gray-100 rounded-full disabled:opacity-60"
@@ -288,7 +237,7 @@ export default function ChatAreaHeader({ contact }) {
           <img src={videoIcon} alt="Video" className="w-6 h-6" />
         </button>
 
-        <div className="relative ml-auto" ref={menuRef}>
+        <div className="relative" ref={menuRef}>
           <button
             title="More"
             className="p-2 hover:bg-gray-100 rounded-full disabled:opacity-60"
@@ -349,11 +298,12 @@ export default function ChatAreaHeader({ contact }) {
         </div>
       </div>
 
-      {/* Modal for contact info */}
+      {/* ✅ Modal moved OUTSIDE the dropdown so it renders correctly */}
       {showContact && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
           onMouseDown={(e) => {
+            // click outside closes
             if (e.target === e.currentTarget) handleCloseContact();
           }}
         >
