@@ -64,7 +64,7 @@ function Navbar() {
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
           {/* LEFT: Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <img src={MingCuteChat} alt="Logo" className="h-[30px] w-[40px]  sm:w-14 sm:h-14" />
+            <img src={MingCuteChat} alt="Logo" className="w-6 h-6 sm:w-10 sm:h-10" />
           </Link>
 
           {/* CENTER: Desktop Links */}
