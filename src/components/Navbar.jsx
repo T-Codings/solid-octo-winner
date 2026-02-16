@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import Chatties from "../assets/chatties.png";
+import Chatties from "../assets/Chatties.png";
 import { useAuth } from "../context/AuthContext";
 import { Menu, X, LogOut, User2 } from "lucide-react";
 
