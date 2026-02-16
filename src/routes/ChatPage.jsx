@@ -58,14 +58,16 @@ export default function ChatPage() {
           </div>
         </div>
       )}
-      {/* Hamburger button for mobile */}
-      <button
-        className="md:hidden absolute top-4 left-4 z-50 bg-white/80 rounded-xl p-2 shadow"
-        onClick={() => setSidebarOpen(true)}
-        aria-label="Open sidebar"
-      >
-        <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
-      </button>
+      {/* Return arrow for mobile chat view */}
+      {contactId && (
+        <button
+          className="md:hidden absolute top-4 left-4 z-50 bg-white/80 rounded-xl p-2 shadow"
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Back to sidebar"
+        >
+          <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+        </button>
+      )}
       {/* Right */}
       <div className="flex-1 flex flex-col">
         {loading ? (

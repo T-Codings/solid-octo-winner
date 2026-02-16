@@ -190,7 +190,8 @@ export default function ChatAreaHeader({ contact }) {
   return (
     // ✅ STICKY HEADER
     <div className="sticky top-0 z-40 flex items-center gap-3 p-4 font-semibold border-b bg-white">
-      <div className="relative">
+      {/* Arrow button placeholder, if needed, can be added here */}
+      <div className="relative ml-2">
         <img
           src={contact.photoURL || avatarFallback}
           alt={displayName}
