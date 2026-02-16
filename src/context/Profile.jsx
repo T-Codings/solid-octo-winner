@@ -208,6 +208,7 @@ function calcCompletion75({ firstName, lastName, phoneNumber }) {
   return Math.round((done / 4) * 100); // max 75
 }
 
+
 export default function Profile() {
   const { currentUser, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -221,6 +222,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState("");
+  const [shouldRedirect, setShouldRedirect] = useState(false);
 
   const fullName = useMemo(
     () => `${firstName} ${lastName}`.trim(),
@@ -248,7 +250,9 @@ export default function Profile() {
 
           const c = Number(data.profileCompletion ?? 0);
           const complete = Boolean(data.profileComplete) || c >= 75;
-          if (complete) navigate("/contacts");
+          if (complete) {
+            setShouldRedirect(true);
+          }
         }
       } catch {
         setError("Unable to load profile.");
@@ -258,7 +262,13 @@ export default function Profile() {
     };
 
     loadProfile();
-  }, [currentUser, navigate]);
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (shouldRedirect) {
+      navigate("/contacts", { replace: true });
+    }
+  }, [shouldRedirect, navigate]);
 
   const handlePhotoSelect = (e) => {
     const file = e.target.files?.[0];
@@ -312,6 +322,10 @@ export default function Profile() {
     }
   };
 
+  if (shouldRedirect) {
+    // Don't render anything while redirecting
+    return null;
+  }
   if (authLoading || fetching) {
     return (
       <div className="min-h-screen relative overflow-hidden">
