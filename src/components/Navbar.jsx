@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import Real from "../assets/real.png";
-import Chatties from "../assets/Chatties.png"; // Restored import with correct casing
+import MingCuteChat from "../assets/mingcutechat.png"; // Restored import with correct casing
 import { useAuth } from "../context/AuthContext";
 import { Menu, X, LogOut, User2 } from "lucide-react";
 
@@ -65,7 +64,7 @@ function Navbar() {
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
           {/* LEFT: Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <img src={Real} alt="Logo" className="h-[30px] w-[100px] " />
+            <img src={MingCuteChat} alt="Logo" className="h-[30px] w-[100px] " />
           </Link>
 
           {/* CENTER: Desktop Links */}
