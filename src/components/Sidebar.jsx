@@ -11,7 +11,7 @@ import Chatties from "../assets/Chatties.png";
 import CreateNewChat from "../assets/Createnewchat.png";
 import { Search } from "lucide-react";
 
-function Sidebar() {
+function Sidebar({ onSelectContact }) {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
@@ -75,6 +75,7 @@ function Sidebar() {
     const contactId = c.id || c.uid; // doc id is usually the contact uid
     if (!contactId) return;
     navigate(`/chat/${contactId}`);
+    if (onSelectContact) onSelectContact();
   };
 
   // ✅ Toggle pin and save to Firestore

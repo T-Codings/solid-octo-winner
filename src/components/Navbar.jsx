@@ -52,7 +52,7 @@ function Navbar() {
   const btnBase =
     "px-4 py-2 rounded-xl text-sm font-extrabold transition inline-flex items-center justify-center gap-2";
   const btnPrimary =
-    `${btnBase} bg-white text-indigo-700 hover:opacity-95`;
+    `${btnBase} bg-gradient-to-r from-emerald-500 via-cyan-500 to-indigo-600 text-white shadow-lg shadow-emerald-500/10 hover:opacity-95 active:scale-[0.99]`;
   const btnGhost =
     `${btnBase} border border-white/40 text-white hover:bg-white/10`;
   const btnDanger =
@@ -121,8 +121,8 @@ function Navbar() {
 
         {/* Mobile dropdown */}
         {open && (
-          <div className="md:hidden border-t border-white/10 bg-slate-950/35 backdrop-blur-xl">
-            <div ref={panelRef} className="mx-auto max-w-6xl px-4 py-4 space-y-3">
+          <div className="md:hidden border-t border-white/10 bg-slate-950/35 backdrop-blur-xl flex justify-center items-center">
+            <div ref={panelRef} className="w-full max-w-xs px-4 py-4 space-y-3 flex flex-col items-center">
               <NavLink to="/" className={linkClass} end>
                 Home
               </NavLink>
@@ -138,11 +138,6 @@ function Navbar() {
                   </NavLink>
 
                   <div className="pt-2">
-                    <div className="text-white/80 text-xs mb-2">
-                      Signed in as{" "}
-                      <span className="text-white font-semibold">{username}</span>
-                    </div>
-
                     <button onClick={handleLogout} className={`w-full ${btnDanger} py-3`}>
                       <LogOut className="w-4 h-4" />
                       Logout
