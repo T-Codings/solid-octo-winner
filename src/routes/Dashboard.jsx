@@ -1,7 +1,7 @@
 import NoteCard from "../component/NoteCard";
 import NoteForm from "../component/NoteForm";
 import React, { useState, useEffect } from 'react';
-import { db } from "./firebaseconfig";
+import { db } from "./firebaseConfig";
 import { useAuth } from "../context/AuthContext";
 import { StickyNote, FileWarning } from "lucide-react";
 import { onSnapshot, query, where, collection } from "firebase/firestore";

@@ -2,7 +2,7 @@
 import React, { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { db } from "../firebaseconfig";
+import { db } from "../firebaseConfig";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { Eye, EyeOff, Mail, Lock, UserPlus } from "lucide-react";
 

@@ -4,7 +4,7 @@
 import React, { useMemo, useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { doc, collection, getDocs, writeBatch, deleteDoc, setDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../firebaseconfig";
+import { db } from "../firebaseConfig";
 import phoneIcon from "../assets/phonefill.png";
 import videoIcon from "../assets/majesticonsvideo.png";
 import moreIcon from "../assets/more2fill.png";

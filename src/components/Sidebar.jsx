@@ -1,7 +1,7 @@
 // src/components/Sidebar.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { collection, doc, onSnapshot, updateDoc } from "firebase/firestore";
-import { db } from "../firebaseconfig";
+import { db } from "../firebaseConfig";
 import { useAuth } from "../context/AuthContext";
 import ContactList from "./ContactList";
 import { useNavigate } from "react-router-dom";

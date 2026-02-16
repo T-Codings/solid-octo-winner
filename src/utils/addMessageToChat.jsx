@@ -1,6 +1,6 @@
 // src/utils/addMessageToChat.jsx
 import { addDoc, collection, doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../firebaseconfig";
+import { db } from "../firebaseConfig";
 import { updateLastMessage } from "./updateLastMessage";
 
 function getChatId(a, b) {

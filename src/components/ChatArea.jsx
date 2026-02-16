@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import pinnedIcon from "../assets/pinned.png";
-import { db } from "../firebaseconfig";
+import { db } from "../firebaseConfig";
 import { doc, deleteDoc, updateDoc } from "firebase/firestore";
 import { addMessageToChat } from "../utils/addMessageToChat";
 import { useAuth } from "../context/AuthContext";

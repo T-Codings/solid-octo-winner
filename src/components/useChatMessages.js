@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
-import { db } from "../firebaseconfig";
+import { db } from "../firebaseConfig";
 
 function getChatId(a, b) {
   return [a, b].sort().join("_");

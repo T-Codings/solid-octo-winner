@@ -1,6 +1,6 @@
 // src/utils/updateLastMessage.js
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../firebaseconfig";
+import { db } from "../firebaseConfig";
 
 function safeName(u) {
   return (
