@@ -267,7 +267,6 @@ export default function Profile() {
   useEffect(() => {
     if (shouldRedirect) {
       navigate("/contacts", { replace: true });
-      setShouldRedirect(false); // Prevent repeated redirects
     }
   }, [shouldRedirect, navigate]);
 
@@ -315,6 +314,7 @@ export default function Profile() {
         { merge: true }
       );
 
+      setShouldRedirect(true);
       navigate("/contacts");
     } catch (err) {
       setError(err?.message || "Failed to save profile.");
