@@ -1,6 +1,7 @@
-// src/context/Profile.jsx   (or src/routes/Profile.jsx)
+import { allCountries } from "country-telephone-data";
+// src/routes/Profile.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useAuth } from "./AuthContext"; // if your path differs, adjust back to ../context/AuthContext
+import { useAuth } from "../context/AuthContext";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 import { useNavigate } from "react-router-dom";
@@ -15,7 +16,8 @@ import {
   Search,
   X,
 } from "lucide-react";
-import { allCountries } from "country-telephone-data";
+
+
 
 function isoToFlag(iso2 = "") {
   const code = String(iso2 || "").toUpperCase();
@@ -32,7 +34,11 @@ const COUNTRY_CODES = (Array.isArray(allCountries) ? allCountries : [])
     const name = String(c?.name || c?.[0] || "").trim();
     const iso2 = String(c?.iso2 || c?.[1] || "").trim().toUpperCase();
     const dialRaw = String(c?.dialCode || c?.[2] || "").trim();
-    const dial = dialRaw ? (dialRaw.startsWith("+") ? dialRaw : `+${dialRaw}`) : "";
+    const dial = dialRaw
+      ? dialRaw.startsWith("+")
+        ? dialRaw
+        : `+${dialRaw}`
+      : "";
     return { name, iso2, dial, flag: isoToFlag(iso2) };
   })
   .filter((c) => c.name && c.iso2 && c.dial)
@@ -48,7 +54,7 @@ function CountryCodePicker({ value, onChange }) {
     COUNTRY_CODES.find((c) => c.iso2 === "CM") ||
     COUNTRY_CODES[0];
 
-  const filtered = useMemo(() => {
+  const filtered = React.useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return COUNTRY_CODES;
     return COUNTRY_CODES.filter(
@@ -111,7 +117,10 @@ function CountryCodePicker({ value, onChange }) {
       {open &&
         createPortal(
           <>
-            <div className="fixed inset-0 z-[9998]" onClick={() => setOpen(false)} />
+            <div
+              className="fixed inset-0 z-[9998]"
+              onClick={() => setOpen(false)}
+            />
             <div
               className="fixed z-[9999] rounded-2xl border border-white/10 bg-slate-950/90 backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.65)] overflow-hidden"
               style={{
@@ -158,7 +167,9 @@ function CountryCodePicker({ value, onChange }) {
                   >
                     <span className="text-lg">{c.flag}</span>
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm text-slate-100 truncate">{c.name}</div>
+                      <div className="text-sm text-slate-100 truncate">
+                        {c.name}
+                      </div>
                       <div className="text-xs text-slate-400">
                         {c.iso2} • {c.dial}
                       </div>
@@ -187,7 +198,7 @@ function calcCompletion75({ firstName, lastName, phoneNumber }) {
     !!String(phoneNumber || "").trim(),
   ];
   const done = checks.reduce((sum, ok) => sum + (ok ? 1 : 0), 0);
-  return Math.round((done / 4) * 100);
+  return Math.round((done / 4) * 100); // max 75
 }
 
 export default function Profile() {
@@ -205,7 +216,11 @@ export default function Profile() {
   const [redirecting, setRedirecting] = useState(false);
   const [error, setError] = useState("");
 
-  const fullName = useMemo(() => `${firstName} ${lastName}`.trim(), [firstName, lastName]);
+  const fullName = useMemo(
+    () => `${firstName} ${lastName}`.trim(),
+    [firstName, lastName]
+  );
+
   const completion = useMemo(
     () => calcCompletion75({ firstName, lastName, phoneNumber }),
     [firstName, lastName, phoneNumber]
@@ -230,9 +245,10 @@ export default function Profile() {
           setPhotoPreview(data.photoURL || "");
 
           const c = Number(data.profileCompletion ?? 0);
-          const complete = Boolean(data.profileComplete) || c >= 75;
+          const complete = Boolean(data.profileComplete) && c >= 75;
 
           if (complete) {
+            // ✅ show a stable loader and navigate once
             setRedirecting(true);
             navigate("/contacts", { replace: true });
             return;
@@ -269,7 +285,11 @@ export default function Profile() {
 
     if (!f || !l || !cc || !pn) return setError("Please complete all fields.");
 
-    const profileCompletion = calcCompletion75({ firstName: f, lastName: l, phoneNumber: pn });
+    const profileCompletion = calcCompletion75({
+      firstName: f,
+      lastName: l,
+      phoneNumber: pn,
+    });
 
     setSaving(true);
     try {
@@ -290,6 +310,7 @@ export default function Profile() {
         { merge: true }
       );
 
+      // ✅ navigate once, with a stable loader
       setRedirecting(true);
       navigate("/contacts", { replace: true });
     } catch (err) {
@@ -324,7 +345,8 @@ export default function Profile() {
               Complete your profile
             </h1>
             <p className="mt-2 text-sm text-slate-300">
-              Completion: <span className="text-white font-semibold">{completion}%</span>{" "}
+              Completion:{" "}
+              <span className="text-white font-semibold">{completion}%</span>{" "}
               ({completion === 75 ? "Completed" : "Fill 3 fields"})
             </p>
           </div>
@@ -339,27 +361,42 @@ export default function Profile() {
             <div className="flex flex-col items-center mb-6">
               <div className="w-24 h-24 rounded-3xl bg-slate-950/40 border border-white/10 overflow-hidden flex items-center justify-center">
                 {photoPreview ? (
-                  <img src={photoPreview} alt="Profile" className="w-full h-full object-cover" />
+                  <img
+                    src={photoPreview}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <ImageIcon className="w-7 h-7 text-slate-300" />
                 )}
               </div>
 
               <div className="mt-3 text-center">
-                <p className="text-white font-semibold">{fullName || "Your Name"}</p>
-                <p className="mt-1 text-xs text-slate-300">Photo upload disabled (Storage rules).</p>
+                <p className="text-white font-semibold">
+                  {fullName || "Your Name"}
+                </p>
+                <p className="mt-1 text-xs text-slate-300">
+                  Photo upload disabled (Storage rules).
+                </p>
               </div>
 
               <label className="mt-3 cursor-pointer inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white bg-white/10 hover:bg-white/15 transition">
                 <ImageIcon className="w-4 h-4" />
                 Choose photo (preview only)
-                <input type="file" accept="image/*" onChange={handlePhotoSelect} className="hidden" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoSelect}
+                  className="hidden"
+                />
               </label>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-200">First name</label>
+                <label className="text-sm font-medium text-slate-200">
+                  First name
+                </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
                   <input
@@ -373,7 +410,9 @@ export default function Profile() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-200">Last name</label>
+                <label className="text-sm font-medium text-slate-200">
+                  Last name
+                </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
                   <input
@@ -387,10 +426,16 @@ export default function Profile() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-200">Phone number</label>
+                <label className="text-sm font-medium text-slate-200">
+                  Phone number
+                </label>
+
                 <div className="grid grid-cols-5 gap-3">
                   <div className="col-span-2">
-                    <CountryCodePicker value={countryCode} onChange={setCountryCode} />
+                    <CountryCodePicker
+                      value={countryCode}
+                      onChange={setCountryCode}
+                    />
                   </div>
 
                   <div className="relative col-span-3">
