@@ -16,187 +16,8 @@ import {
   X,
 } from "lucide-react";
 
-// ✅ Full world country codes
-import { allCountries } from "country-telephone-data";
 
-function isoToFlag(iso2 = "") {
-  const code = String(iso2 || "").toUpperCase();
-  if (code.length !== 2) return "🌍";
-  const A = 0x1f1e6;
-  const alphaA = "A".charCodeAt(0);
-  const first = A + (code.charCodeAt(0) - alphaA);
-  const second = A + (code.charCodeAt(1) - alphaA);
-  return String.fromCodePoint(first, second);
-}
-
-/**
- * ✅ Build full COUNTRY_CODES safely
- * Supports both possible shapes:
- * - array tuples: [name, iso2, dialCode, ...]
- * - objects: { name, iso2, dialCode }
- */
-const COUNTRY_CODES = (Array.isArray(allCountries) ? allCountries : [])
-  .map((c) => {
-    const name = String(c?.name || c?.[0] || "").trim();
-    const iso2 = String(c?.iso2 || c?.[1] || "").trim().toUpperCase();
-    const dialRaw = String(c?.dialCode || c?.[2] || "").trim();
-    const dial = dialRaw
-      ? dialRaw.startsWith("+")
-        ? dialRaw
-        : `+${dialRaw}`
-      : "";
-
-    return { name, iso2, dial, flag: isoToFlag(iso2) };
-  })
-  .filter((c) => c.name && c.iso2 && c.dial)
-  .sort((a, b) => a.name.localeCompare(b.name));
-
-function CountryCodePicker({ value, onChange }) {
-  const [open, setOpen] = useState(false);
-  const [q, setQ] = useState("");
-  const btnRef = useRef(null);
-
-  const selected =
-    COUNTRY_CODES.find((c) => c.dial === value) ||
-    COUNTRY_CODES.find((c) => c.iso2 === "CM") ||
-    COUNTRY_CODES[0];
-
-  const filtered = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    if (!s) return COUNTRY_CODES;
-    return COUNTRY_CODES.filter(
-      (c) =>
-        c.name.toLowerCase().includes(s) ||
-        c.iso2.toLowerCase().includes(s) ||
-        c.dial.includes(s)
-    );
-  }, [q]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e) => e.key === "Escape" && setOpen(false);
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
-
-  const [pos, setPos] = useState({ top: 0, left: 0, width: 320 });
-  useEffect(() => {
-    if (!open) return;
-    const el = btnRef.current;
-    if (!el) return;
-
-    const update = () => {
-      const r = el.getBoundingClientRect();
-      setPos({
-        top: r.bottom + 10,
-        left: Math.min(r.left, window.innerWidth - 340),
-        width: Math.max(r.width, 260),
-      });
-    };
-
-    update();
-    window.addEventListener("resize", update);
-    window.addEventListener("scroll", update, true);
-    return () => {
-      window.removeEventListener("resize", update);
-      window.removeEventListener("scroll", update, true);
-    };
-  }, [open]);
-
-  return (
-    <div className="relative">
-      <button
-        ref={btnRef}
-        type="button"
-        onClick={() => setOpen((s) => !s)}
-        className="w-full rounded-xl bg-slate-950/40 border border-white/10 px-3 py-3 text-slate-100 outline-none hover:bg-slate-950/50 transition flex items-center justify-between"
-      >
-        <span className="flex items-center gap-2 min-w-0">
-          <span className="text-lg">{selected?.flag || "🌍"}</span>
-          <span className="text-sm text-slate-200 truncate">
-            {selected?.dial || "+000"} <span className="text-slate-400">•</span>{" "}
-            {selected?.iso2 || "XX"}
-          </span>
-        </span>
-        <ChevronDown className="w-4 h-4 text-slate-300" />
-      </button>
-
-      {open &&
-        createPortal(
-          <>
-            <div
-              className="fixed inset-0 z-[9998]"
-              onClick={() => setOpen(false)}
-            />
-            <div
-              className="fixed z-[9999] rounded-2xl border border-white/10 bg-slate-950/90 backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.65)] overflow-hidden"
-              style={{
-                top: pos.top,
-                left: pos.left,
-                width: Math.min(pos.width, 360),
-                maxWidth: "90vw",
-              }}
-            >
-              <div className="p-3 border-b border-white/10">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                  <input
-                    value={q}
-                    onChange={(e) => setQ(e.target.value)}
-                    placeholder="Search country, ISO, or code…"
-                    className="w-full rounded-xl bg-white/5 border border-white/10 pl-10 pr-10 py-2.5 text-slate-100 placeholder:text-slate-400 outline-none focus:border-emerald-400/50 focus:ring-4 focus:ring-emerald-400/10 transition"
-                    autoFocus
-                  />
-                  {q && (
-                    <button
-                      type="button"
-                      onClick={() => setQ("")}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-300 hover:text-white transition"
-                      aria-label="Clear search"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <div className="max-h-[320px] overflow-auto">
-                {filtered.map((c) => (
-                  <button
-                    key={`${c.iso2}-${c.dial}`}
-                    type="button"
-                    onClick={() => {
-                      onChange(c.dial);
-                      setOpen(false);
-                      setQ("");
-                    }}
-                    className="w-full px-3 py-2.5 flex items-center gap-3 text-left hover:bg-white/5 transition"
-                  >
-                    <span className="text-lg">{c.flag}</span>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm text-slate-100 truncate">
-                        {c.name}
-                      </div>
-                      <div className="text-xs text-slate-400">
-                        {c.iso2} • {c.dial}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-
-                {filtered.length === 0 && (
-                  <div className="px-4 py-6 text-center text-sm text-slate-300">
-                    No results.
-                  </div>
-                )}
-              </div>
-            </div>
-          </>,
-          document.body
-        )}
-    </div>
-  );
-}
+/* --- keep your isoToFlag, COUNTRY_CODES, CountryCodePicker above --- */
 
 function calcCompletion75({ firstName, lastName, phoneNumber }) {
   const checks = [
@@ -208,7 +29,6 @@ function calcCompletion75({ firstName, lastName, phoneNumber }) {
   return Math.round((done / 4) * 100); // max 75
 }
 
-
 export default function Profile() {
   const { currentUser, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -219,10 +39,10 @@ export default function Profile() {
   const [phoneNumber, setPhoneNumber] = useState("");
 
   const [photoPreview, setPhotoPreview] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [redirecting, setRedirecting] = useState(false);
   const [error, setError] = useState("");
-  const [shouldRedirect, setShouldRedirect] = useState(false);
 
   const fullName = useMemo(
     () => `${firstName} ${lastName}`.trim(),
@@ -237,9 +57,13 @@ export default function Profile() {
   useEffect(() => {
     if (!currentUser) return;
 
-    const loadProfile = async () => {
+    let alive = true;
+
+    (async () => {
       try {
         const snap = await getDoc(doc(db, "users", currentUser.uid));
+        if (!alive) return;
+
         if (snap.exists()) {
           const data = snap.data();
           setFirstName(data.firstName || "");
@@ -249,31 +73,31 @@ export default function Profile() {
           setPhotoPreview(data.photoURL || "");
 
           const c = Number(data.profileCompletion ?? 0);
-          const complete = Boolean(data.profileComplete) && c >= 75;
+          const complete = Boolean(data.profileComplete);
+
           if (complete) {
-            setShouldRedirect(true);
+            // ✅ show a stable loader and navigate once
+            setRedirecting(true);
+            navigate("/contacts", { replace: true });
+            return;
           }
         }
       } catch {
-        setError("Unable to load profile.");
+        if (alive) setError("Unable to load profile.");
       } finally {
-        setFetching(false);
+        if (alive) setFetching(false);
       }
+    })();
+
+    return () => {
+      alive = false;
     };
-
-    loadProfile();
-  }, [currentUser]);
-
-  useEffect(() => {
-    if (shouldRedirect) {
-      navigate("/contacts", { replace: true });
-    }
-  }, [shouldRedirect, navigate]);
+  }, [currentUser, navigate]);
 
   const handlePhotoSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setPhotoPreview(URL.createObjectURL(file)); // preview only
+    setPhotoPreview(URL.createObjectURL(file));
   };
 
   const handleSubmit = async (e) => {
@@ -295,7 +119,7 @@ export default function Profile() {
       phoneNumber: pn,
     });
 
-    setLoading(true);
+    setSaving(true);
     try {
       await setDoc(
         doc(db, "users", currentUser.uid),
@@ -314,23 +138,23 @@ export default function Profile() {
         { merge: true }
       );
 
-      setShouldRedirect(true);
-      navigate("/contacts");
+      // ✅ navigate once, with a stable loader
+      setRedirecting(true);
+      navigate("/contacts", { replace: true });
     } catch (err) {
       setError(err?.message || "Failed to save profile.");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  if (shouldRedirect) {
-    return null;
-  }
-  if (authLoading || fetching) {
+  if (authLoading || fetching || redirecting) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <Loader2 className="w-12 h-12 animate-spin text-white" />
-        <span className="ml-4 text-white text-lg font-semibold">Loading profile...</span>
+        <span className="ml-4 text-white text-lg font-semibold">
+          {redirecting ? "Opening chats..." : "Loading profile..."}
+        </span>
       </div>
     );
   }
@@ -456,10 +280,10 @@ export default function Profile() {
               </div>
 
               <button
-                disabled={loading}
+                disabled={saving}
                 className="w-full rounded-xl py-3 font-semibold text-white bg-gradient-to-r from-emerald-500 via-cyan-500 to-indigo-600 shadow-lg shadow-emerald-500/10 hover:opacity-95 active:scale-[0.99] transition disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {loading ? "Saving..." : "Save profile"}
+                {saving ? "Saving..." : "Save profile"}
               </button>
             </form>
           </div>
