@@ -332,25 +332,36 @@ export default function Profile() {
         { merge: true }
       );
 
-      // Add self as a contact if not present
+      // Add all users as contacts for this user
       if (isComplete) {
-        const contactRef = doc(db, "contacts", currentUser.uid, "list", currentUser.uid);
-        await setDoc(
-          contactRef,
-          {
-            uid: currentUser.uid,
-            firstName: f,
-            lastName: l,
-            fullName: `${f} ${l}`.trim(),
-            countryCode: cc,
-            phoneNumber: pn,
-            photoURL: photoPreview || "",
-            isPinned: true,
-            updatedAtMs: Date.now(),
-            lastMessage: "This is you!",
-          },
-          { merge: true }
-        );
+        // Dynamically import Firestore getDocs and collection
+        const { getDocs, collection } = await import("firebase/firestore");
+        const usersSnap = await getDocs(collection(db, "users"));
+        const batch = [];
+        usersSnap.forEach((userDoc) => {
+          const user = userDoc.data();
+          if (!user?.uid) return;
+          const contactRef = doc(db, "contacts", currentUser.uid, "list", user.uid);
+          batch.push(
+            setDoc(
+              contactRef,
+              {
+                uid: user.uid,
+                firstName: user.firstName || "",
+                lastName: user.lastName || "",
+                fullName: user.fullName || "",
+                countryCode: user.countryCode || "",
+                phoneNumber: user.phoneNumber || "",
+                photoURL: user.photoURL || "",
+                isPinned: user.uid === currentUser.uid,
+                updatedAtMs: Date.now(),
+                lastMessage: user.uid === currentUser.uid ? "This is you!" : "No messages yet",
+              },
+              { merge: true }
+            )
+          );
+        });
+        await Promise.all(batch);
       }
 
       // ✅ Navigate once and stop blinking
