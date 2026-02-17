@@ -249,7 +249,7 @@ export default function Profile() {
           setPhotoPreview(data.photoURL || "");
 
           const c = Number(data.profileCompletion ?? 0);
-          const complete = Boolean(data.profileComplete) || c >= 75;
+          const complete = Boolean(data.profileComplete) && c >= 75;
           if (complete) {
             setShouldRedirect(true);
           }
