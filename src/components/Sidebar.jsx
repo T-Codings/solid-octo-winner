@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import ContactList from "./ContactList";
 import { useNavigate } from "react-router-dom";
 
-import MingcuteChat1 from "../assets/mingcutechat1.png";
+import MingcuteChat from "../assets/mingcutechat.png";
 import Chatties from "../assets/Chatties.png";
 import CreateNewChat from "../assets/Createnewchat.png";
 import { Search } from "lucide-react";
@@ -98,7 +98,7 @@ function Sidebar({ onSelectContact }) {
       <div className="p-4">
         <div className="flex items-center gap-2">
           <img src={Chatties} alt="chatties" className="w-[100px] h-10 object-contain" />
-          <img src={MingcuteChat1} alt="mingcute chat" className="w-10 h-7 object-contain" />
+          <img src={MingcuteChat} alt="mingcute chat" className="w-10 h-7 object-contain" />
         </div>
 
         <div className="mt-4 flex items-center gap-2">

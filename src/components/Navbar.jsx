@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import MingCuteChat1 from "../assets/mingcutechat1.png"; // Restored import with correct casing
+import MingCuteChat from "../assets/mingcutechat.png"; // Restored import with correct casing
 import { useAuth } from "../context/AuthContext";
 import { Menu, X, LogOut, User2 } from "lucide-react";
 
@@ -64,7 +64,7 @@ function Navbar() {
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
           {/* LEFT: Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <img src={MingCuteChat1} alt="Logo" className="w-6 h-6 sm:w-10 sm:h-10" />
+            <img src={MingCuteChat} alt="Logo" className="w-6 h-6 sm:w-10 sm:h-10" />
           </Link>
 
           {/* CENTER: Desktop Links */}

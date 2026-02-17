@@ -15,7 +15,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-import MingCuteChat1 from "../assets/mingcutechat1.png";
+import MingCuteChat from "../assets/mingcutechat.png";
 
 export default function Landing() {
   const features = [
@@ -75,7 +75,7 @@ export default function Landing() {
             {/* Header */}
             <div className="text-center mb-4">
               <div className="mx-auto w-8 h-8 sm:w-12 sm:h-12 rounded-xl bg-white/10 backdrop-blur border border-white/10 flex items-center justify-center shadow-lg overflow-hidden">
-                <img src={MingCuteChat1} alt="Chat Icon" className="w-6 h-6 sm:w-10 sm:h-10" />
+                <img src={MingCuteChat} alt="Chat Icon" className="w-6 h-6 sm:w-10 sm:h-10" />
               </div>
 
               <h1 className="mt-6 text-4xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight">
