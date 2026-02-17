@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import ContactList from "./ContactList";
 import { useNavigate } from "react-router-dom";
 
-import MingcuteChat from "../assets/mingcutechat.png";
+const MingcuteChat = "/mingcutechat.png";
 import Chatties from "../assets/Chatties.png";
 import CreateNewChat from "../assets/Createnewchat.png";
 import { Search } from "lucide-react";

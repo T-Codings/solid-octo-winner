@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import MingCuteChat from "../assets/mingcutechat.png"; // Restored import with correct casing
+const MingCuteChat = "/mingcutechat.png";
 import { useAuth } from "../context/AuthContext";
 import { Menu, X, LogOut, User2 } from "lucide-react";
 

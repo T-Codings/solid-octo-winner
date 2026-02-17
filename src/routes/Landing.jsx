@@ -15,7 +15,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-import MingCuteChat from "../assets/mingcutechat.png";
+const MingCuteChat = "/mingcutechat.png";
 
 export default function Landing() {
   const features = [
