@@ -267,6 +267,7 @@ export default function Profile() {
   useEffect(() => {
     if (shouldRedirect) {
       navigate("/contacts", { replace: true });
+      setShouldRedirect(false); // Prevent repeated redirects
     }
   }, [shouldRedirect, navigate]);
 
