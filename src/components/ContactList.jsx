@@ -40,6 +40,8 @@ function ContactRow({ c, idx, onSelectContact, onOpenMenu }) {
   const title = pickName(c);
   const lastTimeMs = c.lastMessageAtMs || c.updatedAtMs || 0;
 
+  // Placeholder: randomly assign online/offline for demo (replace with real presence logic)
+  const isOnline = c.isOnline ?? (c.uid ? (c.uid.charCodeAt(0) % 2 === 0) : false);
   return (
     <div
       onClick={() => onSelectContact?.({ ...c, uid, id: c.id || uid })}
@@ -49,23 +51,27 @@ function ContactRow({ c, idx, onSelectContact, onOpenMenu }) {
       }}
       className="flex items-center gap-3 p-3 cursor-pointer transition hover:bg-cyan-100/80 select-none"
     >
-      <img
-        src={c.photoURL || Avatar}
-        alt={title}
-        className="w-12 h-12 rounded-full object-cover border-2 border-gray-300"
-        onError={(e) => {
-          if (e.currentTarget.dataset.fallbackApplied) return;
-          e.currentTarget.dataset.fallbackApplied = "1";
-          e.currentTarget.src = Avatar;
-        }}
-      />
-
+      <div className="relative">
+        <img
+          src={c.photoURL || Avatar}
+          alt={title}
+          className="w-12 h-12 rounded-full object-cover border-2 border-gray-300"
+          onError={(e) => {
+            if (e.currentTarget.dataset.fallbackApplied) return;
+            e.currentTarget.dataset.fallbackApplied = "1";
+            e.currentTarget.src = Avatar;
+          }}
+        />
+        <span
+          className={`absolute bottom-1 right-1 w-3 h-3 rounded-full border-2 border-white ${isOnline ? "bg-emerald-400" : "bg-gray-400"}`}
+          title={isOnline ? "Online" : "Offline"}
+        />
+      </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-gray-900 truncate">{title}</h3>
           <span className="text-xs text-slate-500 shrink-0">{fmtTime(lastTimeMs)}</span>
         </div>
-
         <p className="text-xs text-slate-600 truncate">
           {c.lastMessage ? c.lastMessage : "No messages yet"}
         </p>
