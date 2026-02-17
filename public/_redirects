@@ -1,2 +1,2 @@
-/assets/*  /assets/:splat  200
-/*         /index.html     200
+/solid-octo-winner/assets/*  /solid-octo-winner/assets/:splat  200
+/solid-octo-winner/*         /solid-octo-winner/index.html     200
