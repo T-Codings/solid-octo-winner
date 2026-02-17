@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../firebaseConfig";
 
@@ -8,18 +8,20 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
 
-  // ✅ Separate loading flags: auth vs userDoc
   const [authLoading, setAuthLoading] = useState(true);
   const [userDataLoading, setUserDataLoading] = useState(false);
-
   const [userData, setUserData] = useState(null);
+
+  // ✅ AUTH FUNCTIONS (fix "signup is not a function")
+  const signup = (email, password) => createUserWithEmailAndPassword(auth, email, password);
+  const login = (email, password) => signInWithEmailAndPassword(auth, email, password);
+  const logout = () => signOut(auth);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       setAuthLoading(false);
 
-      // reset user data on logout
       if (!user) {
         setUserData(null);
         setUserDataLoading(false);
@@ -41,16 +43,18 @@ export function AuthProvider({ children }) {
     return () => unsub();
   }, []);
 
-  const logout = async () => signOut(auth);
-
   const value = useMemo(
     () => ({
       currentUser,
       userData,
-      setUserData, // ✅ allow Profile to update instantly
+      setUserData,
       authLoading,
       userDataLoading,
-      loading: authLoading || userDataLoading, // optional combined flag
+      loading: authLoading || userDataLoading,
+
+      // ✅ expose these so Signup.jsx can call them
+      signup,
+      login,
       logout,
     }),
     [currentUser, userData, authLoading, userDataLoading]
