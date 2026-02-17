@@ -81,6 +81,7 @@ function ContactRow({ c, idx, onSelectContact, onOpenMenu }) {
 }
 
 export default function ContactList({ contacts = [], onSelectContact, onTogglePin }) {
+  const PAGE_SIZE = 20;
   const pinnedContacts = useMemo(
     () =>
       contacts
@@ -94,7 +95,7 @@ export default function ContactList({ contacts = [], onSelectContact, onTogglePi
     [contacts]
   );
 
-  const allUnpinned = useMemo(
+  const allUnpinnedSorted = useMemo(
     () =>
       contacts
         .filter((c) => !c.isPinned)
@@ -105,6 +106,12 @@ export default function ContactList({ contacts = [], onSelectContact, onTogglePi
             (a.updatedAtMs || a.lastMessageAtMs || 0)
         ),
     [contacts]
+  );
+
+  const [page, setPage] = useState(1);
+  const allUnpinned = useMemo(
+    () => allUnpinnedSorted.slice(0, PAGE_SIZE * page),
+    [allUnpinnedSorted, page]
   );
 
   // ✅ WhatsApp/Discord style right-click menu state
@@ -200,17 +207,29 @@ export default function ContactList({ contacts = [], onSelectContact, onTogglePi
         {allUnpinned.length === 0 ? (
           <p className="px-4 py-3 text-slate-500 text-sm">No contacts</p>
         ) : (
-          <div className="divide-y divide-gray-200">
-            {allUnpinned.map((c, idx) => (
-              <ContactRow
-                key={rowKey(c, idx)}
-                c={c}
-                idx={idx}
-                onSelectContact={onSelectContact}
-                onOpenMenu={openMenu}
-              />
-            ))}
-          </div>
+          <>
+            <div className="divide-y divide-gray-200">
+              {allUnpinned.map((c, idx) => (
+                <ContactRow
+                  key={rowKey(c, idx)}
+                  c={c}
+                  idx={idx}
+                  onSelectContact={onSelectContact}
+                  onOpenMenu={openMenu}
+                />
+              ))}
+            </div>
+            {allUnpinned.length < allUnpinnedSorted.length && (
+              <div className="flex justify-center py-3">
+                <button
+                  className="px-4 py-2 rounded-lg bg-slate-200 text-slate-800 font-semibold hover:bg-slate-300 transition"
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  Load more
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
