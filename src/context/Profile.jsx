@@ -332,6 +332,27 @@ export default function Profile() {
         { merge: true }
       );
 
+      // Add self as a contact if not present
+      if (isComplete) {
+        const contactRef = doc(db, "contacts", currentUser.uid, "list", currentUser.uid);
+        await setDoc(
+          contactRef,
+          {
+            uid: currentUser.uid,
+            firstName: f,
+            lastName: l,
+            fullName: `${f} ${l}`.trim(),
+            countryCode: cc,
+            phoneNumber: pn,
+            photoURL: photoPreview || "",
+            isPinned: true,
+            updatedAtMs: Date.now(),
+            lastMessage: "This is you!",
+          },
+          { merge: true }
+        );
+      }
+
       // ✅ Navigate once and stop blinking
       if (isComplete && !didNavigateRef.current) {
         didNavigateRef.current = true;
@@ -417,62 +438,51 @@ export default function Profile() {
               </label>
             </div>
 
+
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-200">
-                  First name
-                </label>
+                <label className="text-sm font-medium text-slate-200">First name</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
                   <input
                     type="text"
-                    placeholder="e.g. Theodore"
+                    placeholder="Enter first name"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     className="w-full rounded-xl bg-slate-950/40 border border-white/10 px-10 py-3 text-slate-100 placeholder:text-slate-400 outline-none focus:border-emerald-400/50 focus:ring-4 focus:ring-emerald-400/10 transition"
                   />
                 </div>
               </div>
-
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-200">
-                  Last name
-                </label>
+                <label className="text-sm font-medium text-slate-200">Last name</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
                   <input
                     type="text"
-                    placeholder="e.g. Nyang"
+                    placeholder="Enter last name"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     className="w-full rounded-xl bg-slate-950/40 border border-white/10 px-10 py-3 text-slate-100 placeholder:text-slate-400 outline-none focus:border-emerald-400/50 focus:ring-4 focus:ring-emerald-400/10 transition"
                   />
                 </div>
               </div>
-
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-200">
-                  Phone number
-                </label>
-
-                <div className="grid grid-cols-5 gap-3">
-                  <div className="col-span-2">
-                    <CountryCodePicker
-                      value={countryCode}
-                      onChange={setCountryCode}
-                    />
-                  </div>
-
-                  <div className="relative col-span-3">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                    <input
-                      type="text"
-                      placeholder="6xx xxx xxx"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      className="w-full rounded-xl bg-slate-950/40 border border-white/10 pl-10 pr-3 py-3 text-slate-100 placeholder:text-slate-400 outline-none focus:border-emerald-400/50 focus:ring-4 focus:ring-emerald-400/10 transition"
-                    />
-                  </div>
+                <label className="text-sm font-medium text-slate-200">Country code</label>
+                <CountryCodePicker
+                  value={countryCode}
+                  onChange={setCountryCode}
+                />
+                <label className="text-sm font-medium text-slate-200 mt-4 block">Phone number</label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                  <input
+                    type="text"
+                    placeholder="Enter phone number"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    className="w-full rounded-xl bg-slate-950/40 border border-white/10 pl-10 pr-3 py-3 text-slate-100 placeholder:text-slate-400 outline-none focus:border-emerald-400/50 focus:ring-4 focus:ring-emerald-400/10 transition"
+                  />
                 </div>
               </div>
 
