@@ -44,40 +44,55 @@ export default function ChatPage() {
     return () => unsub();
   }, [currentUser, contactId]);
 
+  const isMobile = window.innerWidth < 768;
+  // On mobile: show only sidebar if no contact selected, only chat if contact selected
   return (
     <div className="h-[calc(100vh-64px)] flex bg-white relative">
-      {/* Sidebar: overlay on mobile, static on desktop */}
+      {/* Desktop sidebar */}
       <div className="hidden md:block">
         <Sidebar onSelectContact={() => {}} />
       </div>
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-40 bg-black/40 flex md:hidden" onClick={() => setSidebarOpen(false)}>
-          <div className="w-[85vw] max-w-xs h-full bg-white shadow-xl" onClick={e => e.stopPropagation()}>
-            <Sidebar onSelectContact={() => setSidebarOpen(false)} />
+      {/* Mobile: show only sidebar if no contact selected */}
+      {isMobile && !contactId && (
+        <div className="block md:hidden w-full h-full">
+          <Sidebar onSelectContact={(c) => {
+            window.location.href = `/chat/${c.id || c.uid}`;
+          }} />
+        </div>
+      )}
+      {/* Mobile: show only chat if contact selected */}
+      {isMobile && contactId && (
+        <div className="block md:hidden w-full h-full">
+          <button
+            className="absolute top-4 left-4 z-50 bg-white/80 rounded-xl p-2 shadow"
+            onClick={() => window.location.href = '/contacts'}
+            aria-label="Back to contacts"
+          >
+            <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+          </button>
+          <div className="flex-1 flex flex-col">
+            {loading ? (
+              <div className="flex-1 flex items-center justify-center text-slate-500">
+                Loading chat...
+              </div>
+            ) : (
+              <ChatArea selectedContact={selectedContact} />
+            )}
           </div>
         </div>
       )}
-      {/* Return arrow for mobile chat view */}
-      {contactId && (
-        <button
-          className="md:hidden absolute top-4 left-4 z-50 bg-white/80 rounded-xl p-2 shadow"
-          onClick={() => setSidebarOpen(true)}
-          aria-label="Back to sidebar"
-        >
-          <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-        </button>
+      {/* Desktop chat area */}
+      {!isMobile && (
+        <div className="flex-1 flex flex-col">
+          {loading ? (
+            <div className="flex-1 flex items-center justify-center text-slate-500">
+              Loading chat...
+            </div>
+          ) : (
+            <ChatArea selectedContact={selectedContact} />
+          )}
+        </div>
       )}
-      {/* Right */}
-      <div className="flex-1 flex flex-col">
-        {loading ? (
-          <div className="flex-1 flex items-center justify-center text-slate-500">
-            Loading chat...
-          </div>
-        ) : (
-          <ChatArea selectedContact={selectedContact} />
-        )}
-      </div>
     </div>
   );
 }
