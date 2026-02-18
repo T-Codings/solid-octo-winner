@@ -88,7 +88,7 @@ export default function ContactList({ contacts = [], onSelectContact, onTogglePi
   const pinnedContacts = useMemo(
     () =>
       contacts
-        .filter((c) => c.isPinned === false)
+        .filter((c) => c.isPinned === true)
         .slice()
         .sort(
           (a, b) =>

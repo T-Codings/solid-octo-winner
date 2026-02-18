@@ -353,7 +353,7 @@ export default function Profile() {
                 countryCode: user.countryCode || "",
                 phoneNumber: user.phoneNumber || "",
                 photoURL: user.photoURL || "",
-                isPinned: user.uid === currentUser.uid,
+                isPinned: false, // Always unpinned by default
                 updatedAtMs: Date.now(),
                 lastMessage: user.uid === currentUser.uid ? "This is you!" : "No messages yet",
               },
