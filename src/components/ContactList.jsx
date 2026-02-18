@@ -42,6 +42,8 @@ function ContactRow({ c, idx, onSelectContact, onOpenMenu }) {
 
   // Placeholder: randomly assign online/offline for demo (replace with real presence logic)
   const isOnline = c.isOnline ?? (c.uid ? (c.uid.charCodeAt(0) % 2 === 0) : false);
+  // Only show pin icon if contact is pinned
+  // (No code change needed here, but logic for pinning is below)
   return (
     <div
       onClick={() => onSelectContact?.({ ...c, uid, id: c.id || uid })}
@@ -82,10 +84,11 @@ function ContactRow({ c, idx, onSelectContact, onOpenMenu }) {
 
 export default function ContactList({ contacts = [], onSelectContact, onTogglePin }) {
   const PAGE_SIZE = 20;
+  // Only contacts with isPinned === true go in pinnedContacts
   const pinnedContacts = useMemo(
     () =>
       contacts
-        .filter((c) => !!c.isPinned)
+        .filter((c) => c.isPinned === true)
         .slice()
         .sort(
           (a, b) =>
@@ -95,10 +98,11 @@ export default function ContactList({ contacts = [], onSelectContact, onTogglePi
     [contacts]
   );
 
+  // ALL section: only contacts with isPinned !== true
   const allUnpinnedSorted = useMemo(
     () =>
       contacts
-        .filter((c) => !c.isPinned)
+        .filter((c) => c.isPinned !== true)
         .slice()
         .sort(
           (a, b) =>
