@@ -461,10 +461,9 @@ export default function ChatArea({ selectedContact, onReadContact }) {
                 className="absolute bg-white border border-gray-200 rounded-lg py-2 px-0 min-w-[160px]"
                 style={{ left: menu.x, top: menu.y, background: '#fff', boxShadow: '0 4px 24px 0 rgba(37,99,235,0.10)' }}
               >
-                {pinnedMsgIds.includes(menu.msg.id) && (
+                {pinnedMsgIds.includes(menu.msg.id) ? (
                   <button className=" text-left px-4 py-2 bg-white text-red-600 " onClick={() => handleMenuAction("pin", menu.msg)}>Unpin</button>
-                )}
-                {!pinnedMsgIds.includes(menu.msg.id) && (
+                ) : (
                   <>
                     <button className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("copy", menu.msg)}><span>Copy</span></button>
                     <button className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("reply", menu.msg)}><span>Reply</span></button>
