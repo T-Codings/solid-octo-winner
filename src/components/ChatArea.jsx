@@ -1,6 +1,10 @@
 // src/components/ChatArea.jsx
 
 import React, { useState, useRef } from "react";
+import AllIcon from "../assets/all.png";
+import ForwardIcon from "../assets/telegram.png";
+import MoreIcon from "../assets/more2fill.png";
+import ContactList from "./ContactList";
 import pinnedIcon from "../assets/pinned.png";
 import { db } from "../firebaseConfig";
 import { doc, deleteDoc, updateDoc } from "firebase/firestore";
@@ -25,6 +29,9 @@ export default function ChatArea({ selectedContact }) {
   const [selectedMsgIds, setSelectedMsgIds] = useState([]);
   const [multiSelectMode, setMultiSelectMode] = useState(false);
   const chatAreaRef = useRef(null);
+  const [forwardModal, setForwardModal] = useState({ open: false, msg: null });
+  const [forwardSelected, setForwardSelected] = useState([]);
+  const [contacts, setContacts] = useState([]);
 
   const handleSend = async (text) => {
     if (!currentUser || !selectedContact || !text.trim() || sending) return;
@@ -61,18 +68,19 @@ export default function ChatArea({ selectedContact }) {
     } else if (action === "reply") {
       setReplyMsg(msg);
     } else if (action === "forward") {
-      // Forward: send as new message(s) from current user
-      if (!currentUser || !selectedContact) return;
-      if (multiSelectMode && selectedMsgIds.length > 0) {
-        for (const id of selectedMsgIds) {
-          const m = messages.find(m => m.id === id);
-          if (m) await addMessageToChat(currentUser, selectedContact, m.text);
-        }
-      } else {
-        await addMessageToChat(currentUser, selectedContact, msg.text);
+      // WhatsApp-style: open modal to pick contacts
+      setForwardModal({ open: true, msg });
+      setForwardSelected([]);
+      // Fetch contacts for modal (if not already loaded)
+      if (contacts.length === 0 && currentUser) {
+        import("firebase/firestore").then(({ collection, getDocs }) => {
+          getDocs(collection(db, "contacts", currentUser.uid, "list")).then((snap) => {
+            setContacts(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+          });
+        });
       }
-      setMultiSelectMode(false);
-      setSelectedMsgIds([]);
+    } else if (action === "other") {
+      alert("Other action placeholder");
     } else if (action === "delete") {
       if (!currentUser || !selectedContact) return;
       const chatId = [currentUser.uid, selectedContact.uid].sort().join("_");
@@ -315,7 +323,7 @@ export default function ChatArea({ selectedContact }) {
             {/* Popup menu */}
             {menu.visible && (
               <div
-                className="absolute bg-white border border-gray-200 rounded-lg py-2 px-0 min-w-[120px]"
+                className="absolute bg-white border border-gray-200 rounded-lg py-2 px-0 min-w-[160px]"
                 style={{ left: menu.x, top: menu.y, background: '#fff', boxShadow: '0 4px 24px 0 rgba(37,99,235,0.10)' }}
               >
                 {pinnedMsgIds.includes(menu.msg.id) && (
@@ -323,9 +331,10 @@ export default function ChatArea({ selectedContact }) {
                 )}
                 {!pinnedMsgIds.includes(menu.msg.id) && (
                   <>
-                    <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("copy", menu.msg)}>Copy</button>
-                    <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("reply", menu.msg)}>Reply</button>
-                    <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("forward", menu.msg)}>Forward</button>
+                    <button className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("copy", menu.msg)}><span>Copy</span></button>
+                    <button className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("reply", menu.msg)}><span>Reply</span></button>
+                    <button className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("forward", menu.msg)}><img src={ForwardIcon} alt="Forward" className="w-4 h-4" /><span>Forward</span></button>
+                    <button className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("other", menu.msg)}><img src={MoreIcon} alt="Other" className="w-4 h-4" /><span>Other</span></button>
                     {menu.msg.senderId === currentUser.uid && (
                       <>
                         <button className="block w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => handleMenuAction("edit", menu.msg)}>Edit</button>
@@ -345,6 +354,52 @@ export default function ChatArea({ selectedContact }) {
                 )}
               </div>
             )}
+                {/* Forward Modal */}
+                {forwardModal.open && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                    <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md relative">
+                      <h2 className="text-lg font-bold mb-4 flex items-center gap-2"><img src={ForwardIcon} alt="Forward" className="w-5 h-5" /> Forward message</h2>
+                      <div className="max-h-64 overflow-y-auto mb-4">
+                        {contacts.length === 0 ? (
+                          <div className="text-slate-500 text-center">Loading contacts...</div>
+                        ) : (
+                          <ul>
+                            {contacts.map((c) => (
+                              <li key={c.id} className="flex items-center gap-2 py-2 px-2 hover:bg-slate-100 rounded cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={forwardSelected.includes(c.id)}
+                                  onChange={() => setForwardSelected((sel) => sel.includes(c.id) ? sel.filter(id => id !== c.id) : [...sel, c.id])}
+                                />
+                                <img src={c.photoURL || AllIcon} alt={c.fullName || c.name || c.id} className="w-8 h-8 rounded-full object-cover border" />
+                                <span className="truncate flex-1">{c.fullName || c.name || c.id}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <button className="px-4 py-2 rounded bg-gray-200" onClick={() => setForwardModal({ open: false, msg: null })}>Cancel</button>
+                        <button
+                          className="px-4 py-2 rounded bg-emerald-500 text-white font-semibold disabled:opacity-50"
+                          disabled={forwardSelected.length === 0}
+                          onClick={async () => {
+                            if (!currentUser || !forwardModal.msg) return;
+                            for (const id of forwardSelected) {
+                              const c = contacts.find(x => x.id === id);
+                              if (c) await addMessageToChat(currentUser, c, forwardModal.msg.text);
+                            }
+                            setForwardModal({ open: false, msg: null });
+                            setForwardSelected([]);
+                          }}
+                        >
+                          Forward
+                        </button>
+                      </div>
+                      <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-700" onClick={() => setForwardModal({ open: false, msg: null })}>&times;</button>
+                    </div>
+                  </div>
+                )}
           </>
         )}
       </div>
