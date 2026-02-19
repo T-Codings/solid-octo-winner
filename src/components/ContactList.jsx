@@ -35,16 +35,12 @@ function rowKey(c, idx) {
 function ContactRow({ c, idx, onSelectContact, onOpenMenu }) {
   const { currentUser } = useAuth ? useAuth() : { currentUser: null };
   const uid = rowKey(c, idx);
+  // Always use profile name and avatar, fallback to default avatar
   const title = pickName(c);
+  const avatar = c.photoURL || Avatar;
   const lastTimeMs = c.lastMessageAtMs || c.updatedAtMs || 0;
-
-  // Placeholder: randomly assign online/offline for demo (replace with real presence logic)
   const isOnline = c.isOnline ?? (c.uid ? (c.uid.charCodeAt(0) % 2 === 0) : false);
-  // Only show pin icon if contact is pinned
-  // (No code change needed here, but logic for pinning is below)
-  // Unread logic: if c.unreadCount > 0, show indicator
   const unreadCount = c.unreadCount || 0;
-  // Handler to mark as read/unread on click
   const handleUnreadClick = async (e) => {
     e.stopPropagation();
     if (!currentUser) return;
@@ -57,7 +53,6 @@ function ContactRow({ c, idx, onSelectContact, onOpenMenu }) {
       );
     } catch {}
   };
-  // Handler to simulate unread (for demo/testing)
   const handleDateClick = async (e) => {
     e.stopPropagation();
     if (!currentUser) return;
@@ -81,7 +76,7 @@ function ContactRow({ c, idx, onSelectContact, onOpenMenu }) {
     >
       <div className="relative">
         <img
-          src={c.photoURL || Avatar}
+          src={avatar}
           alt={title}
           className="w-12 h-12 rounded-full object-cover border-2 border-gray-300"
           onError={(e) => {

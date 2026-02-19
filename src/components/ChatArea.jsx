@@ -237,7 +237,7 @@ export default function ChatArea({ selectedContact }) {
                       currentUser.fullName ||
                       currentUser.name ||
                       (currentUser.firstName && currentUser.lastName ? `${currentUser.firstName} ${currentUser.lastName}` : ""),
-                    photoURL: currentUser.photoURL || undefined,
+                    photoURL: currentUser.photoURL || Avatar,
                   }
                 : {
                     name:
@@ -245,7 +245,7 @@ export default function ChatArea({ selectedContact }) {
                       selectedContact.fullName ||
                       selectedContact.name ||
                       (selectedContact.firstName && selectedContact.lastName ? `${selectedContact.firstName} ${selectedContact.lastName}` : ""),
-                    photoURL: selectedContact.photoURL || undefined,
+                    photoURL: selectedContact.photoURL || Avatar,
                   };
               const pinned = false;
               const unread = unreadMsgIds.includes(msg.id);
