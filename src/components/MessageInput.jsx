@@ -1,11 +1,17 @@
 
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import telegramIcon from "../assets/telegram.png";
 import voiceIcon from "../assets/iconparksolidvoice.png";
 import attachIcon from "../assets/akar.png";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "../firebaseConfig";
 
-export default function MessageInput({ onSend, disabled }) {
+function getTypingDocId(a, b) {
+  return [a, b].sort().join("_");
+}
+
+export default function MessageInput({ onSend, disabled, selectedContact, currentUser }) {
   const emojiList = [
     "😀", "😁", "😂", "🤣", "😊", "😍", "😎", "😢", "😡", "👍", "🙏", "🎉", "❤️", "🔥", "🥳",
     "😃", "😄", "😅", "😆", "😉", "😋", "😜", "🤪", "🤩", "🥰", "😘", "😗", "😙", "😚", "😇",
@@ -18,9 +24,33 @@ export default function MessageInput({ onSend, disabled }) {
     "🐧", "🐦", "🐤", "🐣", "🐥", "🦆", "🦅", "🦉", "🦇", "🐺", "🐗", "🐴", "🦄", 
     "🐎", "🐖", "🐄", "🐂", "🐃", "🐅", "🐆", "🦌", "🐇", "🦝", "🦡", 
   ];
+
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [message, setMessage] = useState("");
   const inputRef = useRef(null);
+
+  // Typing indicator logic
+  useEffect(() => {
+    if (!currentUser || !selectedContact) return;
+    let typingTimeout;
+    if (message.length > 0) {
+      const chatId = getTypingDocId(currentUser.uid, selectedContact.uid);
+      const typingDoc = doc(db, "chats", chatId, "meta", "typing");
+      setDoc(typingDoc, { typingUid: currentUser.uid, isTyping: true }, { merge: true });
+      // Auto stop typing after 2.5s of inactivity
+      typingTimeout = setTimeout(() => {
+        setDoc(typingDoc, { typingUid: currentUser.uid, isTyping: false }, { merge: true });
+      }, 2500);
+    } else if (currentUser && selectedContact) {
+      const chatId = getTypingDocId(currentUser.uid, selectedContact.uid);
+      const typingDoc = doc(db, "chats", chatId, "meta", "typing");
+      setDoc(typingDoc, { typingUid: currentUser.uid, isTyping: false }, { merge: true });
+    }
+    return () => {
+      if (typingTimeout) clearTimeout(typingTimeout);
+    };
+    // eslint-disable-next-line
+  }, [message, currentUser, selectedContact]);
 
   const handleEmojiSelect = (emoji) => {
     setMessage((msg) => msg + emoji);

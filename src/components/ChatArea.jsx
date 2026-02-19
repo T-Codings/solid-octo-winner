@@ -1,23 +1,40 @@
 // src/components/ChatArea.jsx
 
-import React, { useState, useRef } from "react";
+
+import React, { useState, useRef, useEffect } from "react";
+import sentSound from "../assets/sent.mp3";
+import receivedSound from "../assets/received.mp3";
+import notificationSound from "../assets/notification.mp3";
 import AllIcon from "../assets/all.png";
 import ForwardIcon from "../assets/telegram.png";
 import MoreIcon from "../assets/more2fill.png";
 import ContactList from "./ContactList";
 import pinnedIcon from "../assets/pinned.png";
 import { db } from "../firebaseConfig";
-import { doc, deleteDoc, updateDoc } from "firebase/firestore";
+import { doc, deleteDoc, updateDoc, onSnapshot, setDoc } from "firebase/firestore";
 import { addMessageToChat } from "../utils/addMessageToChat";
 import { useAuth } from "../context/AuthContext";
 import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 import useChatMessages from "./useChatMessages";
 
+// Typing indicator Firestore helper
+function getTypingDocId(a, b) {
+  return [a, b].sort().join("_");
+}
+
 export default function ChatArea({ selectedContact, onReadContact }) {
   const { currentUser } = useAuth();
   const [sending, setSending] = useState(false);
   const { messages, loading } = useChatMessages(currentUser, selectedContact);
+
+  // Sound refs
+  const sentAudio = useRef();
+  const receivedAudio = useRef();
+  const notificationAudio = useRef();
+
+  // Track last message id to detect new incoming messages
+  const lastMsgId = useRef(null);
   const [menu, setMenu] = useState({ visible: false, x: 0, y: 0, msg: null });
   const [editingMsgId, setEditingMsgId] = useState(null);
   const [editText, setEditText] = useState("");
@@ -29,20 +46,60 @@ export default function ChatArea({ selectedContact, onReadContact }) {
   const [selectedMsgIds, setSelectedMsgIds] = useState([]);
   const [multiSelectMode, setMultiSelectMode] = useState(false);
   const chatAreaRef = useRef(null);
+
   const [forwardModal, setForwardModal] = useState({ open: false, msg: null });
   const [forwardSelected, setForwardSelected] = useState([]);
   const [contacts, setContacts] = useState([]);
+
+  // Typing indicator state
+  const [otherTyping, setOtherTyping] = useState(false);
+
+  // Listen for typing indicator from the other user
+  useEffect(() => {
+    if (!currentUser || !selectedContact) return;
+    const chatId = getTypingDocId(currentUser.uid, selectedContact.uid);
+    const typingDoc = doc(db, "chats", chatId, "meta", "typing");
+    const unsub = onSnapshot(typingDoc, (snap) => {
+      const data = snap.data();
+      // Show typing if the other user is typing
+      setOtherTyping(data && data.typingUid === selectedContact.uid && data.isTyping === true);
+    });
+    return () => unsub();
+  }, [currentUser, selectedContact]);
+
 
   const handleSend = async (text) => {
     if (!currentUser || !selectedContact || !text.trim() || sending) return;
     setSending(true);
     try {
       await addMessageToChat(currentUser, selectedContact, text.trim());
+      // Play sent sound
+      if (sentAudio.current) sentAudio.current.play();
+      // Stop typing indicator after sending
+      const chatId = getTypingDocId(currentUser.uid, selectedContact.uid);
+      const typingDoc = doc(db, "chats", chatId, "meta", "typing");
+      await setDoc(typingDoc, { typingUid: currentUser.uid, isTyping: false }, { merge: true });
     } catch (e) {
       console.error("Send failed:", e);
     } finally {
       setSending(false);
     }
+    // Play received/notification sound on new incoming message
+    useEffect(() => {
+      if (!messages || !messages.length) return;
+      const lastMsg = messages[messages.length - 1];
+      if (lastMsgId.current && lastMsg.id !== lastMsgId.current) {
+        // Only play if not sent by current user
+        if (lastMsg.senderId !== (currentUser && currentUser.uid)) {
+          if (receivedAudio.current) receivedAudio.current.play();
+          // If window is not focused, play notification sound
+          if (typeof document !== 'undefined' && document.hidden && notificationAudio.current) {
+            notificationAudio.current.play();
+          }
+        }
+      }
+      lastMsgId.current = lastMsg.id;
+    }, [messages, currentUser]);
   };
 
 
@@ -464,7 +521,15 @@ export default function ChatArea({ selectedContact, onReadContact }) {
           </>
         )}
       </div>
-      <MessageInput onSend={handleSend} disabled={sending} />
+      {/* Typing indicator */}
+      {otherTyping && (
+        <div className="px-4 pb-2 text-xs text-emerald-500 animate-pulse">{selectedContact.firstName || selectedContact.fullName || selectedContact.name || "Contact"} is typing...</div>
+      )}
+      <MessageInput onSend={handleSend} disabled={sending} selectedContact={selectedContact} currentUser={currentUser} />
+      {/* Audio elements for sounds */}
+      <audio ref={sentAudio} src={sentSound} preload="auto" />
+      <audio ref={receivedAudio} src={receivedSound} preload="auto" />
+      <audio ref={notificationAudio} src={notificationSound} preload="auto" />
     </div>
   );
 }
