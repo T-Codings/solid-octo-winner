@@ -14,7 +14,7 @@ import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 import useChatMessages from "./useChatMessages";
 
-export default function ChatArea({ selectedContact }) {
+export default function ChatArea({ selectedContact, onReadContact }) {
   const { currentUser } = useAuth();
   const [sending, setSending] = useState(false);
   const { messages, loading } = useChatMessages(currentUser, selectedContact);
@@ -59,9 +59,13 @@ export default function ChatArea({ selectedContact }) {
           selectedContact.uid || selectedContact.id
         ),
         { unreadCount: 0 }
-      ).catch(() => {});
+      ).then(() => {
+        if (typeof onReadContact === 'function') {
+          onReadContact(selectedContact.uid || selectedContact.id);
+        }
+      }).catch(() => {});
     });
-  }, [currentUser, selectedContact]);
+  }, [currentUser, selectedContact, onReadContact]);
 
   if (!selectedContact) {
     return (
@@ -265,7 +269,6 @@ export default function ChatArea({ selectedContact }) {
                     }
                   }}
                 >
-                  {/* WhatsApp-style: sender (right) shows time, name, avatar, then message; receiver (left) shows avatar, name above bubble, time below bubble, bubble close to avatar */}
                   {multiSelectMode && (
                     <input
                       type="checkbox"
@@ -275,76 +278,97 @@ export default function ChatArea({ selectedContact }) {
                       onClick={e => e.stopPropagation()}
                     />
                   )}
-                  {/* Receiver: avatar left, name above, time below, bubble close to avatar */}
-                  {!isSender && (
-                    <img
-                      src={profile.photoURL}
-                      alt={profile.name}
-                      className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 mr-2 mb-1"
-                      style={{ alignSelf: "flex-end" }}
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
-                    />
-                  )}
-                  <div className={`flex flex-col ${isSender ? "items-end" : "items-start"} max-w-[80%]`}>
-                    {/* Name/time row */}
-                    {isSender ? (
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs text-slate-400">
-                          {msg.createdAtMs
-                            ? new Date(msg.createdAtMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                            : ""}
-                        </span>
-                        <span className="text-slate-700 font-semibold text-xs">{profile.name}</span>
-                      </div>
-                    ) : (
-                      <span className="text-slate-700 font-semibold text-xs mb-1">{profile.name}</span>
-                    )}
-                    {/* Message bubble */}
-                    {editingMsgId === msg.id ? (
-                      <div className="flex gap-2 items-center">
-                        <input
-                          className="border rounded px-2 py-1 text-sm"
-                          value={editText}
-                          onChange={e => setEditText(e.target.value)}
-                          autoFocus
-                        />
-                        <button className="text-emerald-600 font-bold" onClick={() => handleEditSave(msg)}>Save</button>
-                        <button className="text-gray-500" onClick={() => setEditingMsgId(null)}>Cancel</button>
-                      </div>
-                    ) : (
-                      <div
-                        className={`break-words px-4 py-2 rounded-xl shadow text-[16px] ${isSender ? "bg-sky-500 text-right text-white" : "bg-white text-left text-[16px] text-gray-800"}`}
-                        style={{ maxWidth: '650px', wordBreak: 'break-word', overflowWrap: 'break-word', marginLeft: !isSender ? 0 : undefined, marginRight: isSender ? 0 : undefined }}
-                      >
-                        {msg.text}
-                        {reactions[msg.id] && <span className="ml-2 text-xl">{reactions[msg.id]}</span>}
-                        {replyMsg && replyMsg.id === msg.id && (
-                          <span className="ml-2 text-xs text-emerald-600">(Replying)</span>
+                  {/* Receiver: avatar, name, time above, then bubble below */}
+                  {!isSender ? (
+                    <>
+                      <img
+                        src={profile.photoURL}
+                        alt={profile.name}
+                        className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 mr-2 mb-2"
+                        style={{ alignSelf: "flex-start" }}
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                      <div className="flex flex-col items-start max-w-[80%]">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-slate-700 font-semibold text-xs">{profile.name}</span>
+                          <span className="text-xs text-slate-400">
+                            {msg.createdAtMs
+                              ? new Date(msg.createdAtMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                              : ""}
+                          </span>
+                        </div>
+                        {editingMsgId === msg.id ? (
+                          <div className="flex gap-2 items-center">
+                            <input
+                              className="border rounded px-2 py-1 text-sm"
+                              value={editText}
+                              onChange={e => setEditText(e.target.value)}
+                              autoFocus
+                            />
+                            <button className="text-emerald-600 font-bold" onClick={() => handleEditSave(msg)}>Save</button>
+                            <button className="text-gray-500" onClick={() => setEditingMsgId(null)}>Cancel</button>
+                          </div>
+                        ) : (
+                          <div
+                            className="break-words px-4 py-2 rounded-xl shadow text-[16px] bg-white text-left text-gray-800"
+                            style={{ maxWidth: '650px', wordBreak: 'break-word', overflowWrap: 'break-word', marginLeft: 0 }}
+                          >
+                            {msg.text}
+                            {reactions[msg.id] && <span className="ml-2 text-xl">{reactions[msg.id]}</span>}
+                            {replyMsg && replyMsg.id === msg.id && (
+                              <span className="ml-2 text-xs text-emerald-600">(Replying)</span>
+                            )}
+                          </div>
                         )}
                       </div>
-                    )}
-                    {/* Receiver: time below bubble */}
-                    {!isSender && (
-                      <span className="text-xs text-slate-400 mt-1">
-                        {msg.createdAtMs
-                          ? new Date(msg.createdAtMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                          : ""}
-                      </span>
-                    )}
-                  </div>
-                  {/* Sender: avatar right */}
-                  {isSender && (
-                    <img
-                      src={profile.photoURL}
-                      alt={profile.name}
-                      className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 ml-2 mb-1"
-                      style={{ alignSelf: "flex-end" }}
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
-                    />
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex flex-col items-end max-w-[80%]">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs text-slate-400">
+                            {msg.createdAtMs
+                              ? new Date(msg.createdAtMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                              : ""}
+                          </span>
+                          <span className="text-slate-700 font-semibold text-xs">{profile.name}</span>
+                        </div>
+                        {editingMsgId === msg.id ? (
+                          <div className="flex gap-2 items-center">
+                            <input
+                              className="border rounded px-2 py-1 text-sm"
+                              value={editText}
+                              onChange={e => setEditText(e.target.value)}
+                              autoFocus
+                            />
+                            <button className="text-emerald-600 font-bold" onClick={() => handleEditSave(msg)}>Save</button>
+                            <button className="text-gray-500" onClick={() => setEditingMsgId(null)}>Cancel</button>
+                          </div>
+                        ) : (
+                          <div
+                            className="break-words px-4 py-2 rounded-xl shadow-lg text-[16px] bg-gradient-to-br from-sky-500 to-blue-600 text-right text-white border-2 border-sky-400 ring-2 ring-sky-200/40"
+                            style={{ maxWidth: '650px', wordBreak: 'break-word', overflowWrap: 'break-word', marginRight: 0, boxShadow: '0 4px 24px 0 rgba(37,99,235,0.15)' }}
+                          >
+                            {msg.text}
+                            {reactions[msg.id] && <span className="ml-2 text-xl">{reactions[msg.id]}</span>}
+                            {replyMsg && replyMsg.id === msg.id && (
+                              <span className="ml-2 text-xs text-emerald-200">(Replying)</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <img
+                        src={profile.photoURL}
+                        alt={profile.name}
+                        className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 ml-2 mb-2"
+                        style={{ alignSelf: "flex-start" }}
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                    </>
                   )}
                   {/* Emoji picker for react */}
                   {reactingMsgId === msg.id && (
@@ -446,7 +470,7 @@ export default function ChatArea({ selectedContact }) {
 }
 
 
-    
+
 
 
 

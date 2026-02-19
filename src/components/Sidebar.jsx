@@ -19,6 +19,8 @@ function Sidebar({ onSelectContact }) {
   const [loadingContacts, setLoadingContacts] = useState(true);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
+  // Track which contacts have been read in this session
+  const [readContacts, setReadContacts] = useState([]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -76,6 +78,11 @@ function Sidebar({ onSelectContact }) {
     if (!contactId) return;
     navigate(`/chat/${contactId}`);
     if (onSelectContact) onSelectContact();
+  };
+
+  // Handler to mark a contact as read in the UI
+  const handleReadContact = (contactId) => {
+    setReadContacts((prev) => prev.includes(contactId) ? prev : [...prev, contactId]);
   };
 
   // ✅ Toggle pin and save to Firestore
@@ -136,6 +143,7 @@ function Sidebar({ onSelectContact }) {
         contacts={filteredContacts}
         onSelectContact={handleSelectContact}
         onTogglePin={handleTogglePin}
+        readContacts={readContacts}
       />
     </div>
   );

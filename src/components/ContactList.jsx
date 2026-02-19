@@ -110,7 +110,7 @@ function ContactRow({ c, idx, onSelectContact, onOpenMenu }) {
   );
 }
 
-export default function ContactList({ contacts = [], onSelectContact, onTogglePin }) {
+export default function ContactList({ contacts = [], onSelectContact, onTogglePin, readContacts = [] }) {
   const PAGE_SIZE = 20;
   // Only contacts with isPinned === true go in pinnedContacts
   const pinnedContacts = useMemo(
@@ -209,7 +209,7 @@ export default function ContactList({ contacts = [], onSelectContact, onTogglePi
             {pinnedContacts.map((c, idx) => (
               <ContactRow
                 key={rowKey(c, idx)}
-                c={c}
+                c={{ ...c, unreadCount: (readContacts.includes(c.id || c.uid) ? 0 : c.unreadCount) }}
                 idx={idx}
                 onSelectContact={onSelectContact}
                 onOpenMenu={openMenu}
@@ -244,7 +244,7 @@ export default function ContactList({ contacts = [], onSelectContact, onTogglePi
               {allUnpinned.map((c, idx) => (
                 <ContactRow
                   key={rowKey(c, idx)}
-                  c={c}
+                  c={{ ...c, unreadCount: (readContacts.includes(c.id || c.uid) ? 0 : c.unreadCount) }}
                   idx={idx}
                   onSelectContact={onSelectContact}
                   onOpenMenu={openMenu}
