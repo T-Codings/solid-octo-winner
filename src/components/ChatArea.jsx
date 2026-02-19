@@ -191,12 +191,7 @@ export default function ChatArea({ selectedContact }) {
         <ChatHeader contact={selectedContact} />
       </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-2 relative">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-8">
-            <span className="w-8 h-8 mb-2 border-4 border-sky-400 border-t-transparent rounded-full animate-spin"></span>
-            <span className="text-sky-600 font-semibold text-base">Loading messages...</span>
-          </div>
-        ) : messages.length === 0 ? (
+        {loading ? null : messages.length === 0 ? (
           null
         ) : (
           <>
@@ -237,11 +232,23 @@ export default function ChatArea({ selectedContact }) {
               const isSender = msg.senderId === currentUser.uid;
               const profile = isSender
                 ? {
-                    name: currentUser.displayName || currentUser.fullName || "Me",
+                    name:
+                      currentUser.displayName ||
+                      currentUser.fullName ||
+                      currentUser.name ||
+                      currentUser.email ||
+                      currentUser.uid ||
+                      "",
                     photoURL: currentUser.photoURL || undefined,
                   }
                 : {
-                    name: selectedContact.displayName || selectedContact.fullName || selectedContact.name || "Contact",
+                    name:
+                      selectedContact.displayName ||
+                      selectedContact.fullName ||
+                      selectedContact.name ||
+                      selectedContact.email ||
+                      selectedContact.uid ||
+                      "",
                     photoURL: selectedContact.photoURL || undefined,
                   };
               const pinned = false;
