@@ -72,7 +72,18 @@ export default function ChatArea({ selectedContact, onReadContact }) {
     if (!currentUser || !selectedContact || !text.trim() || sending) return;
     setSending(true);
     try {
-      await addMessageToChat(currentUser, selectedContact, text.trim());
+      // If replying, include reply info
+      let reply = null;
+      if (replyMsg) {
+        reply = {
+          id: replyMsg.id,
+          text: replyMsg.text,
+          senderId: replyMsg.senderId,
+          createdAtMs: replyMsg.createdAtMs || null,
+        };
+      }
+      await addMessageToChat(currentUser, selectedContact, text.trim(), reply);
+      setReplyMsg(null);
       // Play sent sound
       if (sentAudio.current) sentAudio.current.play();
       // Stop typing indicator after sending
@@ -372,11 +383,14 @@ export default function ChatArea({ selectedContact, onReadContact }) {
                             className="break-words px-4 py-2 rounded-xl shadow text-[16px] bg-white text-left text-gray-800"
                             style={{ maxWidth: '650px', wordBreak: 'break-word', overflowWrap: 'break-word', marginLeft: 0 }}
                           >
+                            {/* Show replied message if present */}
+                            {msg.reply && (
+                              <div className="mb-1 px-2 py-1 rounded bg-sky-50 border-l-4 border-sky-400 text-xs text-sky-700">
+                                <span className="font-semibold">Reply:</span> {msg.reply.text}
+                              </div>
+                            )}
                             {msg.text}
                             {reactions[msg.id] && <span className="ml-2 text-xl">{reactions[msg.id]}</span>}
-                            {replyMsg && replyMsg.id === msg.id && (
-                              <span className="ml-2 text-xs text-emerald-600">(Replying)</span>
-                            )}
                           </div>
                         )}
                       </div>
@@ -408,11 +422,14 @@ export default function ChatArea({ selectedContact, onReadContact }) {
                             className="break-words px-4 py-2 rounded-xl shadow-lg text-[16px] bg-gradient-to-br from-sky-500 to-blue-600 text-right text-white border-2 border-sky-400 ring-2 ring-sky-200/40"
                             style={{ maxWidth: '650px', wordBreak: 'break-word', overflowWrap: 'break-word', marginRight: 0, boxShadow: '0 4px 24px 0 rgba(37,99,235,0.15)' }}
                           >
+                            {/* Show replied message if present */}
+                            {msg.reply && (
+                              <div className="mb-1 px-2 py-1 rounded bg-sky-600/30 border-l-4 border-sky-200 text-xs text-sky-100">
+                                <span className="font-semibold">Reply:</span> {msg.reply.text}
+                              </div>
+                            )}
                             {msg.text}
                             {reactions[msg.id] && <span className="ml-2 text-xl">{reactions[msg.id]}</span>}
-                            {replyMsg && replyMsg.id === msg.id && (
-                              <span className="ml-2 text-xs text-emerald-200">(Replying)</span>
-                            )}
                           </div>
                         )}
                       </div>
@@ -430,7 +447,7 @@ export default function ChatArea({ selectedContact, onReadContact }) {
                   {/* Emoji picker for react */}
                   {reactingMsgId === msg.id && (
                     <div className="absolute z-50 bg-white border border-gray-200 rounded-xl shadow-lg p-2 flex flex-wrap gap-2 w-64">
-                      {["😀","😂","😍","👍","🙏","🎉","❤️","🔥","🥳","😢","😡","😎","😇","🤔","😏","😬","😱","😴","🤩","😜","🤪","😕","😒","😓","😔","😲","😖","😭","😤","😡","😠","🤬","😷","🤒","🤕","🤢","🤮","🤧","🥳","🥺","🤠","🤡","🤥","🤫","🤭","🧐","🤓","😈","👿","👹","👺","💀","👻","👽","🤖","💩"].map(e=>(
+                      {"😀","😂","😍","👍","🙏","🎉","❤️","🔥","🥳","😢","😡","😎","😇","🤔","😏","😬","😱","😴","🤩","😜","🤪","😕","😒","😓","😔","😲","😖","😭","😤","😡","😠","🤬","😷","🤒","🤕","🤢","🤮","🤧","🥳","🥺","🤠","🤡","🤥","🤫","🤭","🧐","🤓","😈","👿","👹","👺","💀","👻","👽","🤖","💩".map(e=>(
                         <button key={e} className="text-2xl p-1 hover:bg-gray-100 rounded" onClick={()=>handleReact(msg.id,e)}>{e}</button>
                       ))}
                     </div>
@@ -525,7 +542,7 @@ export default function ChatArea({ selectedContact, onReadContact }) {
       {otherTyping && (
         <div className="px-4 pb-2 text-xs text-emerald-500 animate-pulse">{selectedContact.firstName || selectedContact.fullName || selectedContact.name || "Contact"} is typing...</div>
       )}
-      <MessageInput onSend={handleSend} disabled={sending} selectedContact={selectedContact} currentUser={currentUser} />
+      <MessageInput onSend={handleSend} disabled={sending} selectedContact={selectedContact} currentUser={currentUser} replyMsg={replyMsg} onCancelReply={() => setReplyMsg(null)} />
       {/* Audio elements for sounds */}
       <audio ref={sentAudio} src={sentSound} preload="auto" />
       <audio ref={receivedAudio} src={receivedSound} preload="auto" />

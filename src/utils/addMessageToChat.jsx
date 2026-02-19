@@ -7,7 +7,7 @@ function getChatId(a, b) {
   return [a, b].sort().join("_");
 }
 
-export async function addMessageToChat(currentUser, otherUser, text) {
+export async function addMessageToChat(currentUser, otherUser, text, reply = null) {
   const cleanText = String(text || "").trim();
   if (!cleanText) return;
 
@@ -15,12 +15,14 @@ export async function addMessageToChat(currentUser, otherUser, text) {
 
   // 1) add message
   const messagesRef = collection(db, "chats", chatId, "messages");
-  await addDoc(messagesRef, {
+  const msgObj = {
     text: cleanText,
     senderId: currentUser.uid, // ✅ match your rules (senderId)
     createdAt: serverTimestamp(),
     createdAtMs: Date.now(),
-  });
+  };
+  if (reply) msgObj.reply = reply;
+  await addDoc(messagesRef, msgObj);
 
   // 2) update contacts list entries (both sides)
   await updateLastMessage(currentUser, otherUser, cleanText);
