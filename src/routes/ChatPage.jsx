@@ -72,8 +72,9 @@ export default function ChatPage() {
           </button>
           <div className="flex-1 flex flex-col">
             {loading ? (
-              <div className="flex-1 flex items-center justify-center text-slate-500">
-                Loading chat...
+              <div className="flex-1 flex flex-col items-center justify-center">
+                <span className="w-8 h-8 mb-2 border-4 border-sky-400 border-t-transparent rounded-full animate-spin"></span>
+                <span className="text-sky-600 font-semibold text-base">Loading chat...</span>
               </div>
             ) : (
               <ChatArea selectedContact={selectedContact} />

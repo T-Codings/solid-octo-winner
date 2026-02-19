@@ -124,7 +124,12 @@ function Sidebar({ onSelectContact }) {
         </div>
       </div>
 
-      {loadingContacts && <p className="p-4 text-slate-500 text-center">Loading...</p>}
+      {loadingContacts && (
+        <div className="flex flex-col items-center justify-center py-8">
+          <span className="w-8 h-8 mb-2 border-4 border-sky-400 border-t-transparent rounded-full animate-spin"></span>
+          <span className="text-sky-600 font-semibold text-base">Loading contacts...</span>
+        </div>
+      )}
       {!loadingContacts && error && <p className="p-4 text-red-600 text-center">{error}</p>}
 
       <ContactList

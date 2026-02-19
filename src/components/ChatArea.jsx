@@ -192,7 +192,10 @@ export default function ChatArea({ selectedContact }) {
       </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-2 relative">
         {loading ? (
-          <div className="text-slate-400 text-center">Loading messages...</div>
+          <div className="flex flex-col items-center justify-center py-8">
+            <span className="w-8 h-8 mb-2 border-4 border-sky-400 border-t-transparent rounded-full animate-spin"></span>
+            <span className="text-sky-600 font-semibold text-base">Loading messages...</span>
+          </div>
         ) : messages.length === 0 ? (
           null
         ) : (
@@ -381,7 +384,10 @@ export default function ChatArea({ selectedContact }) {
                       <h2 className="text-lg font-bold mb-4 flex items-center gap-2"><img src={ForwardIcon} alt="Forward" className="w-5 h-5" /> Forward message</h2>
                       <div className="max-h-64 overflow-y-auto mb-4">
                         {contacts.length === 0 ? (
-                          <div className="text-slate-500 text-center">Loading contacts...</div>
+                          <div className="flex flex-col items-center justify-center py-4">
+                            <span className="w-6 h-6 mb-2 border-4 border-sky-400 border-t-transparent rounded-full animate-spin"></span>
+                            <span className="text-sky-600 font-semibold text-sm">Loading contacts...</span>
+                          </div>
                         ) : (
                           <ul>
                             {contacts.map((c) => (
