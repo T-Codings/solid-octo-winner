@@ -447,7 +447,7 @@ export default function ChatArea({ selectedContact, onReadContact }) {
                   {/* Emoji picker for react */}
                   {reactingMsgId === msg.id && (
                     <div className="absolute z-50 bg-white border border-gray-200 rounded-xl shadow-lg p-2 flex flex-wrap gap-2 w-64">
-                      {"😀","😂","😍","👍","🙏","🎉","❤️","🔥","🥳","😢","😡","😎","😇","🤔","😏","😬","😱","😴","🤩","😜","🤪","😕","😒","😓","😔","😲","😖","😭","😤","😡","😠","🤬","😷","🤒","🤕","🤢","🤮","🤧","🥳","🥺","🤠","🤡","🤥","🤫","🤭","🧐","🤓","😈","👿","👹","👺","💀","👻","👽","🤖","💩".map(e=>(
+                      {["😀","😂","😍","👍","🙏","🎉","❤️","🔥","🥳","😢","😡","😎","😇","🤔","😏","😬","😱","😴","🤩","😜","🤪","😕","😒","😓","😔","😲","😖","😭","😤","😡","😠","🤬","😷","🤒","🤕","🤢","🤮","🤧","🥳","🥺","🤠","🤡","🤥","🤫","🤭","🧐","🤓","😈","👿","👹","👺","💀","👻","👽","🤖","💩".map(e=>(
                         <button key={e} className="text-2xl p-1 hover:bg-gray-100 rounded" onClick={()=>handleReact(msg.id,e)}>{e}</button>
                       ))}
                     </div>
