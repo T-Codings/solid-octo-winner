@@ -1,5 +1,8 @@
 // src/components/ContactList.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "../firebaseConfig";
+import { useAuth } from "../context/AuthContext";
 
 const Avatar = `${import.meta.env.BASE_URL}avatar.png`;
 
@@ -36,6 +39,7 @@ function rowKey(c, idx) {
 }
 
 function ContactRow({ c, idx, onSelectContact, onOpenMenu }) {
+  const { currentUser } = useAuth ? useAuth() : { currentUser: null };
   const uid = rowKey(c, idx);
   const title = pickName(c);
   const lastTimeMs = c.lastMessageAtMs || c.updatedAtMs || 0;
@@ -46,6 +50,32 @@ function ContactRow({ c, idx, onSelectContact, onOpenMenu }) {
   // (No code change needed here, but logic for pinning is below)
   // Unread logic: if c.unreadCount > 0, show indicator
   const unreadCount = c.unreadCount || 0;
+  // Handler to mark as read/unread on click
+  const handleUnreadClick = async (e) => {
+    e.stopPropagation();
+    if (!currentUser) return;
+    const contactId = c.id || c.uid;
+    if (!contactId) return;
+    try {
+      await updateDoc(
+        doc(db, "contacts", currentUser.uid, "list", contactId),
+        { unreadCount: 0 }
+      );
+    } catch {}
+  };
+  // Handler to simulate unread (for demo/testing)
+  const handleDateClick = async (e) => {
+    e.stopPropagation();
+    if (!currentUser) return;
+    const contactId = c.id || c.uid;
+    if (!contactId) return;
+    try {
+      await updateDoc(
+        doc(db, "contacts", currentUser.uid, "list", contactId),
+        { unreadCount: 1 }
+      );
+    } catch {}
+  };
   return (
     <div
       onClick={() => onSelectContact?.({ ...c, uid, id: c.id || uid })}
@@ -53,7 +83,7 @@ function ContactRow({ c, idx, onSelectContact, onOpenMenu }) {
         e.preventDefault();
         onOpenMenu?.(e.clientX, e.clientY, c);
       }}
-      className={`flex items-center gap-3 p-3 cursor-pointer transition hover:bg-cyan-100/80 select-none ${unreadCount > 0 ? "bg-red-50" : ""}`}
+      className={`flex items-center gap-3 p-3 cursor-pointer transition hover:bg-sky-100/80 select-none ${unreadCount > 0 ? "bg-sky-50" : ""}`}
     >
       <div className="relative">
         <img
@@ -70,20 +100,21 @@ function ContactRow({ c, idx, onSelectContact, onOpenMenu }) {
           className={`absolute bottom-1 right-1 w-3 h-3 rounded-full border-2 border-white ${isOnline ? "bg-emerald-400" : "bg-gray-400"}`}
           title={isOnline ? "Online" : "Offline"}
         />
-        {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full px-1.5 py-0.5 min-w-[18px] text-center border border-white">
-            {unreadCount > 9 ? "9+" : unreadCount}
-          </span>
-        )}
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <h3 className={`text-sm font-semibold truncate ${unreadCount > 0 ? "text-red-700" : "text-gray-900"}`}>{title}</h3>
-          <span className="text-xs text-slate-500 shrink-0">{fmtTime(lastTimeMs)}</span>
+          <h3 className={`text-sm font-semibold truncate ${unreadCount > 0 ? "text-sky-700" : "text-gray-900"}`}>{title}</h3>
+          <div className="flex flex-col items-end">
+            <span className="text-xs text-slate-500 shrink-0 cursor-pointer" onClick={unreadCount === 0 ? handleDateClick : undefined}>{fmtTime(lastTimeMs)}</span>
+            {unreadCount > 0 && (
+              <span className="mt-1 bg-sky-500 text-white text-xs font-bold rounded-full px-2 py-0.5 min-w-[22px] text-center cursor-pointer" onClick={handleUnreadClick} title="Mark as read">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </div>
         </div>
-        <p className={`text-xs truncate ${unreadCount > 0 ? "text-red-600 font-semibold" : "text-slate-600"}`}>
+        <p className={`text-xs truncate ${unreadCount > 0 ? "text-sky-600 font-semibold" : "text-slate-600"}`}>
           {c.lastMessage ? c.lastMessage : "No messages yet"}
-          {unreadCount > 0 && <span className="ml-2 text-xs text-red-500 font-bold">• Unread</span>}
         </p>
       </div>
     </div>
