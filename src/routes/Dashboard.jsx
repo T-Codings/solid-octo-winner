@@ -79,8 +79,9 @@ useEffect(() => {
         )}
 
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animat-pulse text-indigo-600">Loading notes...</div>
+          <div className="flex flex-col items-center justify-center py-12">
+            <span className="w-8 h-8 mb-2 border-4 border-sky-400 border-t-transparent rounded-full animate-spin"></span>
+            <span className="text-sky-600 font-semibold text-base">Loading notes...</span>
           </div>
         ) : notes.length > 0 ? (
           <div

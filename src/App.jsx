@@ -16,9 +16,11 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-indigo-600">
-        <div className="w-16 h-16 border-4 border-transparent border-t-indigo-600 rounded-full animate-spin mb-4" />
-        <span>Loading...</span>
+      <div className="flex items-center justify-center h-screen bg-white">
+        <div className="flex flex-col items-center">
+          <span className="w-10 h-10 mb-2 border-4 border-sky-400 border-t-transparent rounded-full animate-spin"></span>
+          <span className="text-sky-600 font-semibold text-lg">Loading app...</span>
+        </div>
       </div>
     );
   }

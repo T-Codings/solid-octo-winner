@@ -128,7 +128,12 @@ function Login() {
                 disabled={loading}
                 className="w-full rounded-2xl py-4 text-base sm:text-lg font-semibold text-white bg-gradient-to-r from-emerald-500 via-cyan-500 to-indigo-600 shadow-lg shadow-emerald-500/10 hover:opacity-95 active:scale-[0.99] transition disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {loading ? "Logging in..." : "Log in"}
+                {loading ? (
+                  <>
+                    <span className="w-5 h-5 border-4 border-sky-400 border-t-transparent rounded-full animate-spin inline-block mr-2"></span>
+                    Logging in...
+                  </>
+                ) : "Log in"}
               </button>
 
               <p className="text-center text-base sm:text-lg text-slate-200/85 pt-2">

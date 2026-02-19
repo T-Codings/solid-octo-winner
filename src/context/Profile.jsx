@@ -378,14 +378,16 @@ export default function Profile() {
     }
   };
 
-  // Dark loading screen (no blinking loops)
+  // Unified loading screen (sky color scheme)
   if (authLoading || fetching || redirecting) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <Loader2 className="w-12 h-12 animate-spin text-white" />
-        <span className="ml-4 text-white text-lg font-semibold">
-          {redirecting ? "Opening chats..." : "Loading profile..."}
-        </span>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="flex flex-col items-center">
+          <span className="w-10 h-10 mb-2 border-4 border-sky-400 border-t-transparent rounded-full animate-spin"></span>
+          <span className="text-sky-600 font-semibold text-lg">
+            {redirecting ? "Opening chats..." : "Loading profile..."}
+          </span>
+        </div>
       </div>
     );
   }
