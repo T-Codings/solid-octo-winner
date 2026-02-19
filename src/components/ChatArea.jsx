@@ -191,7 +191,9 @@ export default function ChatArea({ selectedContact }) {
         <ChatHeader contact={selectedContact} />
       </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-2 relative">
-        {loading ? null : messages.length === 0 ? (
+        {loading ? (
+          <div className="text-slate-400 text-center">Loading messages...</div>
+        ) : messages.length === 0 ? (
           null
         ) : (
           <>
@@ -232,20 +234,12 @@ export default function ChatArea({ selectedContact }) {
               const isSender = msg.senderId === currentUser.uid;
               const profile = isSender
                 ? {
-                    name:
-                      currentUser.displayName ||
-                      currentUser.fullName ||
-                      currentUser.name ||
-                      (currentUser.firstName && currentUser.lastName ? `${currentUser.firstName} ${currentUser.lastName}` : ""),
-                    photoURL: currentUser.photoURL || Avatar,
+                    name: currentUser.displayName || currentUser.fullName || "Me",
+                    photoURL: currentUser.photoURL || undefined,
                   }
                 : {
-                    name:
-                      selectedContact.displayName ||
-                      selectedContact.fullName ||
-                      selectedContact.name ||
-                      (selectedContact.firstName && selectedContact.lastName ? `${selectedContact.firstName} ${selectedContact.lastName}` : ""),
-                    photoURL: selectedContact.photoURL || Avatar,
+                    name: selectedContact.displayName || selectedContact.fullName || selectedContact.name || "Contact",
+                    photoURL: selectedContact.photoURL || undefined,
                   };
               const pinned = false;
               const unread = unreadMsgIds.includes(msg.id);
@@ -387,10 +381,7 @@ export default function ChatArea({ selectedContact }) {
                       <h2 className="text-lg font-bold mb-4 flex items-center gap-2"><img src={ForwardIcon} alt="Forward" className="w-5 h-5" /> Forward message</h2>
                       <div className="max-h-64 overflow-y-auto mb-4">
                         {contacts.length === 0 ? (
-                          <div className="flex flex-col items-center justify-center py-4">
-                            <span className="w-6 h-6 mb-2 border-4 border-sky-400 border-t-transparent rounded-full animate-spin"></span>
-                            <span className="text-sky-600 font-semibold text-sm">Loading contacts...</span>
-                          </div>
+                          <div className="text-slate-500 text-center">Loading contacts...</div>
                         ) : (
                           <ul>
                             {contacts.map((c) => (
