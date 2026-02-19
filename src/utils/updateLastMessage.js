@@ -3,11 +3,11 @@ import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 
 function safeName(u) {
+  // Only use WhatsApp-style: fullName, name, first+last, never email
   return (
     u?.fullName ||
     u?.name ||
     [u?.firstName, u?.lastName].filter(Boolean).join(" ") ||
-    (u?.email ? u.email.split("@")[0] : "") ||
     "User"
   );
 }

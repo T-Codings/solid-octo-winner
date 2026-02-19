@@ -246,24 +246,25 @@ export default function ChatArea({ selectedContact }) {
               return (
                 <div
                   key={msg.id}
-                  className={`flex items-end ${isSender ? "justify-end" : "justify-start"} ${pinned ? "ring-2 ring-yellow-400" : ""} ${unread ? "bg-yellow-50" : ""}`}
-                        onDoubleClick={(e) => {
-                          if (!multiSelectMode) {
-                            const rect = e.currentTarget.getBoundingClientRect();
-                            setMenu({
-                              visible: true,
-                              x: e.clientX - rect.left,
-                              y: e.clientY - rect.top,
-                              msg,
-                            });
-                          }
-                        }}
+                  className={`flex items-end ${isSender ? "justify-end" : "justify-start"} gap-2 ${pinned ? "ring-2 ring-yellow-400" : ""} ${unread ? "bg-yellow-50" : ""}`}
+                  onDoubleClick={(e) => {
+                    if (!multiSelectMode) {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setMenu({
+                        visible: true,
+                        x: e.clientX - rect.left,
+                        y: e.clientY - rect.top,
+                        msg,
+                      });
+                    }
+                  }}
                   onClick={() => {
                     if (multiSelectMode) {
                       setSelectedMsgIds(ids => ids.includes(msg.id) ? ids.filter(id => id !== msg.id) : [...ids, msg.id]);
                     }
                   }}
                 >
+                  {/* WhatsApp-style: sender (right) shows time, name, avatar, then message; receiver (left) shows avatar, name above bubble, time below bubble, bubble close to avatar */}
                   {multiSelectMode && (
                     <input
                       type="checkbox"
@@ -273,27 +274,33 @@ export default function ChatArea({ selectedContact }) {
                       onClick={e => e.stopPropagation()}
                     />
                   )}
+                  {/* Receiver: avatar left, name above, time below, bubble close to avatar */}
                   {!isSender && (
                     <img
                       src={profile.photoURL}
                       alt={profile.name}
-                      className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 mr-2 mb-6"
-                      style={{ alignSelf: "flex-start" }}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 mr-2 mb-1"
+                      style={{ alignSelf: "flex-end" }}
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
                       }}
                     />
                   )}
-                  <div className="flex flex-col items-end">
-                    <div className={`flex items-center gap-2 text-xs text-slate-400 mb-1 ${isSender ? "justify-end" : "justify-start"}`}>
-                      <span>
-                        {msg.createdAtMs
-                          ? new Date(msg.createdAtMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                          : ""}
-                      </span>
-                      <span className="text-slate-700 font-semibold">{profile.name}</span>
-                      {unread && <span className="ml-1 text-yellow-600">• Unread</span>}
-                    </div>
+                  <div className={`flex flex-col ${isSender ? "items-end" : "items-start"} max-w-[80%]`}>
+                    {/* Name/time row */}
+                    {isSender ? (
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs text-slate-400">
+                          {msg.createdAtMs
+                            ? new Date(msg.createdAtMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                            : ""}
+                        </span>
+                        <span className="text-slate-700 font-semibold text-xs">{profile.name}</span>
+                      </div>
+                    ) : (
+                      <span className="text-slate-700 font-semibold text-xs mb-1">{profile.name}</span>
+                    )}
+                    {/* Message bubble */}
                     {editingMsgId === msg.id ? (
                       <div className="flex gap-2 items-center">
                         <input
@@ -308,7 +315,7 @@ export default function ChatArea({ selectedContact }) {
                     ) : (
                       <div
                         className={`break-words px-4 py-2 rounded-xl shadow text-[16px] ${isSender ? "bg-sky-500 text-right text-white" : "bg-white text-left text-[16px] text-gray-800"}`}
-                        style={{ maxWidth: '650px', wordBreak: 'break-word', overflowWrap: 'break-word' }}
+                        style={{ maxWidth: '650px', wordBreak: 'break-word', overflowWrap: 'break-word', marginLeft: !isSender ? 0 : undefined, marginRight: isSender ? 0 : undefined }}
                       >
                         {msg.text}
                         {reactions[msg.id] && <span className="ml-2 text-xl">{reactions[msg.id]}</span>}
@@ -317,13 +324,22 @@ export default function ChatArea({ selectedContact }) {
                         )}
                       </div>
                     )}
+                    {/* Receiver: time below bubble */}
+                    {!isSender && (
+                      <span className="text-xs text-slate-400 mt-1">
+                        {msg.createdAtMs
+                          ? new Date(msg.createdAtMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                          : ""}
+                      </span>
+                    )}
                   </div>
+                  {/* Sender: avatar right */}
                   {isSender && (
                     <img
                       src={profile.photoURL}
                       alt={profile.name}
-                      className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 ml-2 mb-6"
-                      style={{ alignSelf: "flex-start" }}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 ml-2 mb-1"
+                      style={{ alignSelf: "flex-end" }}
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
                       }}
