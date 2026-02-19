@@ -236,8 +236,6 @@ export default function ChatArea({ selectedContact }) {
                       currentUser.displayName ||
                       currentUser.fullName ||
                       currentUser.name ||
-                      currentUser.email ||
-                      currentUser.uid ||
                       "",
                     photoURL: currentUser.photoURL || undefined,
                   }
@@ -246,8 +244,6 @@ export default function ChatArea({ selectedContact }) {
                       selectedContact.displayName ||
                       selectedContact.fullName ||
                       selectedContact.name ||
-                      selectedContact.email ||
-                      selectedContact.uid ||
                       "",
                     photoURL: selectedContact.photoURL || undefined,
                   };

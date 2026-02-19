@@ -22,16 +22,10 @@ function pickName(c) {
   const first = String(c.firstName || "").trim();
   const last = String(c.lastName || "").trim();
   const fullFromParts = `${first} ${last}`.trim();
-
   const fullName = String(c.fullName || "").trim();
   const name = String(c.name || "").trim();
-
-  const email = String(c.email || "").trim();
-  const emailName = email.includes("@") ? email.split("@")[0] : "";
-
-  const phone = String(c.phoneNumber || "").trim();
-
-  return fullFromParts || fullName || name || emailName || email || phone || "Unknown";
+  // Only use username/fullName/first+last, never email/phone
+  return fullFromParts || fullName || name || "Unknown";
 }
 
 function rowKey(c, idx) {
