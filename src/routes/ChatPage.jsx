@@ -15,8 +15,8 @@ export default function ChatPage() {
   const [selectedContact, setSelectedContact] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  // Add a ref to access Sidebar's handleReadContact
-  const sidebarRef = React.useRef();
+  // LIFT readContacts state here
+  const [readContacts, setReadContacts] = useState([]);
 
   useEffect(() => {
     if (!currentUser || !contactId) return;
@@ -49,23 +49,21 @@ export default function ChatPage() {
   const isMobile = window.innerWidth < 768;
   // Handler to mark contact as read in sidebar
   const handleReadContact = (contactId) => {
-    if (sidebarRef.current && typeof sidebarRef.current.handleReadContact === 'function') {
-      sidebarRef.current.handleReadContact(contactId);
-    }
+    setReadContacts((prev) => prev.includes(contactId) ? prev : [...prev, contactId]);
   };
 
   return (
     <div className="h-[calc(100vh-64px)] flex bg-white relative">
       {/* Desktop sidebar */}
       <div className="hidden md:block">
-        <Sidebar ref={sidebarRef} onSelectContact={() => {}} />
+        <Sidebar onSelectContact={() => {}} readContacts={readContacts} />
       </div>
       {/* Mobile: show only sidebar if no contact selected */}
       {isMobile && !contactId && (
         <div className="block md:hidden w-full h-full">
-          <Sidebar ref={sidebarRef} onSelectContact={(c) => {
+          <Sidebar onSelectContact={(c) => {
             window.location.href = `/chat/${c.id || c.uid}`;
-          }} />
+          }} readContacts={readContacts} />
         </div>
       )}
       {/* Mobile: show only chat if contact selected */}

@@ -11,7 +11,7 @@ import Chatties from "../assets/Chatties.png";
 import CreateNewChat from "../assets/Createnewchat.png";
 import { Search } from "lucide-react";
 
-function Sidebar({ onSelectContact }) {
+function Sidebar({ onSelectContact, readContacts = [] }) {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
@@ -20,7 +20,7 @@ function Sidebar({ onSelectContact }) {
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   // Track which contacts have been read in this session
-  const [readContacts, setReadContacts] = useState([]);
+  // const [readContacts, setReadContacts] = useState([]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -81,9 +81,9 @@ function Sidebar({ onSelectContact }) {
   };
 
   // Handler to mark a contact as read in the UI
-  const handleReadContact = (contactId) => {
-    setReadContacts((prev) => prev.includes(contactId) ? prev : [...prev, contactId]);
-  };
+  // const handleReadContact = (contactId) => {
+  //   setReadContacts((prev) => prev.includes(contactId) ? prev : [...prev, contactId]);
+  // };
 
   // ✅ Toggle pin and save to Firestore
   const handleTogglePin = async (c) => {
