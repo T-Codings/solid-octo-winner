@@ -187,7 +187,9 @@ export default function ChatArea({ selectedContact }) {
 
   return (
     <div className="flex flex-col h-full" ref={chatAreaRef}>
-      <ChatHeader contact={selectedContact} />
+      <div className="sticky top-0 z-10 bg-white">
+        <ChatHeader contact={selectedContact} />
+      </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-2 relative">
         {loading ? (
           <div className="text-slate-400 text-center">Loading messages...</div>
