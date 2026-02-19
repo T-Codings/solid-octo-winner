@@ -45,6 +45,24 @@ export default function ChatArea({ selectedContact }) {
     }
   };
 
+
+  // Reset unreadCount to 0 when opening this chat
+  React.useEffect(() => {
+    if (!currentUser || !selectedContact) return;
+    import("firebase/firestore").then(({ doc, updateDoc }) => {
+      updateDoc(
+        doc(
+          require("../firebaseConfig").db,
+          "contacts",
+          currentUser.uid,
+          "list",
+          selectedContact.uid || selectedContact.id
+        ),
+        { unreadCount: 0 }
+      ).catch(() => {});
+    });
+  }, [currentUser, selectedContact]);
+
   if (!selectedContact) {
     return (
       <div className="flex flex-col h-full">

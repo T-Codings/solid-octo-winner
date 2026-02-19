@@ -15,7 +15,7 @@ function safeName(u) {
 export async function updateLastMessage(sender, receiver, text) {
   const nowMs = Date.now();
 
-  // ✅ sender's sidebar entry: contacts/{sender}/list/{receiver}
+  // Sender's sidebar entry: reset unreadCount to 0
   await setDoc(
     doc(db, "contacts", sender.uid, "list", receiver.uid),
     {
@@ -27,13 +27,23 @@ export async function updateLastMessage(sender, receiver, text) {
       updatedAtMs: nowMs,
       lastMessageAt: serverTimestamp(),
       lastMessageAtMs: nowMs,
+      unreadCount: 0,
     },
     { merge: true }
   );
 
-  // ✅ receiver's sidebar entry: contacts/{receiver}/list/{sender}
+  // Receiver's sidebar entry: increment unreadCount
+  const receiverContactRef = doc(db, "contacts", receiver.uid, "list", sender.uid);
+  // Get current unreadCount
+  let prevUnread = 0;
+  try {
+    const snap = await import("firebase/firestore").then(({ getDoc }) => getDoc(receiverContactRef));
+    if (snap && snap.exists()) {
+      prevUnread = snap.data().unreadCount || 0;
+    }
+  } catch {}
   await setDoc(
-    doc(db, "contacts", receiver.uid, "list", sender.uid),
+    receiverContactRef,
     {
       uid: sender.uid,
       fullName: safeName(sender),
@@ -43,6 +53,7 @@ export async function updateLastMessage(sender, receiver, text) {
       updatedAtMs: nowMs,
       lastMessageAt: serverTimestamp(),
       lastMessageAtMs: nowMs,
+      unreadCount: prevUnread + 1,
     },
     { merge: true }
   );
