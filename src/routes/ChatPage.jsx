@@ -15,6 +15,8 @@ export default function ChatPage() {
   const [selectedContact, setSelectedContact] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Add a ref to access Sidebar's handleReadContact
+  const sidebarRef = React.useRef();
 
   useEffect(() => {
     if (!currentUser || !contactId) return;
@@ -45,17 +47,23 @@ export default function ChatPage() {
   }, [currentUser, contactId]);
 
   const isMobile = window.innerWidth < 768;
-  // On mobile: show only sidebar if no contact selected, only chat if contact selected
+  // Handler to mark contact as read in sidebar
+  const handleReadContact = (contactId) => {
+    if (sidebarRef.current && typeof sidebarRef.current.handleReadContact === 'function') {
+      sidebarRef.current.handleReadContact(contactId);
+    }
+  };
+
   return (
     <div className="h-[calc(100vh-64px)] flex bg-white relative">
       {/* Desktop sidebar */}
       <div className="hidden md:block">
-        <Sidebar onSelectContact={() => {}} />
+        <Sidebar ref={sidebarRef} onSelectContact={() => {}} />
       </div>
       {/* Mobile: show only sidebar if no contact selected */}
       {isMobile && !contactId && (
         <div className="block md:hidden w-full h-full">
-          <Sidebar onSelectContact={(c) => {
+          <Sidebar ref={sidebarRef} onSelectContact={(c) => {
             window.location.href = `/chat/${c.id || c.uid}`;
           }} />
         </div>
@@ -77,7 +85,7 @@ export default function ChatPage() {
                 <span className="text-sky-600 font-semibold text-base">Loading chat...</span>
               </div>
             ) : (
-              <ChatArea selectedContact={selectedContact} />
+              <ChatArea selectedContact={selectedContact} onReadContact={handleReadContact} />
             )}
           </div>
         </div>
@@ -90,7 +98,7 @@ export default function ChatPage() {
               Loading chat...
             </div>
           ) : (
-            <ChatArea selectedContact={selectedContact} />
+            <ChatArea selectedContact={selectedContact} onReadContact={handleReadContact} />
           )}
         </div>
       )}
