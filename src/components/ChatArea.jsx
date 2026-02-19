@@ -230,25 +230,21 @@ export default function ChatArea({ selectedContact }) {
             {/* Regular (unpinned) messages */}
             {messages.filter(msg => !pinnedMsgIds.includes(msg.id)).map((msg) => {
               const isSender = msg.senderId === currentUser.uid;
-              const getProfileName = (user) => {
-                const first = String(user.firstName || "").trim();
-                const last = String(user.lastName || "").trim();
-                const fullFromParts = `${first} ${last}`.trim();
-                return (
-                  user.fullName ||
-                  fullFromParts ||
-                  user.displayName ||
-                  user.name ||
-                  ""
-                );
-              };
               const profile = isSender
                 ? {
-                    name: getProfileName(currentUser),
+                    name:
+                      currentUser.displayName ||
+                      currentUser.fullName ||
+                      currentUser.name ||
+                      (currentUser.firstName && currentUser.lastName ? `${currentUser.firstName} ${currentUser.lastName}` : ""),
                     photoURL: currentUser.photoURL || undefined,
                   }
                 : {
-                    name: getProfileName(selectedContact),
+                    name:
+                      selectedContact.displayName ||
+                      selectedContact.fullName ||
+                      selectedContact.name ||
+                      (selectedContact.firstName && selectedContact.lastName ? `${selectedContact.firstName} ${selectedContact.lastName}` : ""),
                     photoURL: selectedContact.photoURL || undefined,
                   };
               const pinned = false;
