@@ -297,6 +297,10 @@ export default function Profile() {
 
     const f = firstName.trim();
     const l = lastName.trim();
+    if (!f || !l) {
+      setError("First name and last name are required.");
+      return;
+    }
     const cc = String(countryCode || "").trim();
     const pn = String(phoneNumber || "").trim();
 

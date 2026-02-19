@@ -230,7 +230,7 @@ export default function ChatArea({ selectedContact }) {
               </div>
             )}
             {/* Regular (unpinned) messages */}
-            {messages.filter(msg => !pinnedMsgIds.includes(msg.id)).map((msg) => {
+            {messages.filter(msg => !pinnedMsgIds.includes(msg.id)).map((msg, idx) => {
               const isSender = msg.senderId === currentUser.uid;
               const profile = isSender
                 ? {
@@ -247,6 +247,7 @@ export default function ChatArea({ selectedContact }) {
                 <div
                   key={msg.id}
                   className={`flex items-end ${isSender ? "justify-end" : "justify-start"} gap-2 ${pinned ? "ring-2 ring-yellow-400" : ""} ${unread ? "bg-yellow-50" : ""}`}
+                  style={{ marginBottom: 18 }}
                   onDoubleClick={(e) => {
                     if (!multiSelectMode) {
                       const rect = e.currentTarget.getBoundingClientRect();
