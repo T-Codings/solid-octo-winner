@@ -44,6 +44,8 @@ function ContactRow({ c, idx, onSelectContact, onOpenMenu }) {
   const isOnline = c.isOnline ?? (c.uid ? (c.uid.charCodeAt(0) % 2 === 0) : false);
   // Only show pin icon if contact is pinned
   // (No code change needed here, but logic for pinning is below)
+  // Unread logic: if c.unreadCount > 0, show indicator
+  const unreadCount = c.unreadCount || 0;
   return (
     <div
       onClick={() => onSelectContact?.({ ...c, uid, id: c.id || uid })}
@@ -51,7 +53,7 @@ function ContactRow({ c, idx, onSelectContact, onOpenMenu }) {
         e.preventDefault();
         onOpenMenu?.(e.clientX, e.clientY, c);
       }}
-      className="flex items-center gap-3 p-3 cursor-pointer transition hover:bg-cyan-100/80 select-none"
+      className={`flex items-center gap-3 p-3 cursor-pointer transition hover:bg-cyan-100/80 select-none ${unreadCount > 0 ? "bg-red-50" : ""}`}
     >
       <div className="relative">
         <img
@@ -68,14 +70,20 @@ function ContactRow({ c, idx, onSelectContact, onOpenMenu }) {
           className={`absolute bottom-1 right-1 w-3 h-3 rounded-full border-2 border-white ${isOnline ? "bg-emerald-400" : "bg-gray-400"}`}
           title={isOnline ? "Online" : "Offline"}
         />
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full px-1.5 py-0.5 min-w-[18px] text-center border border-white">
+            {unreadCount > 9 ? "9+" : unreadCount}
+          </span>
+        )}
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-gray-900 truncate">{title}</h3>
+          <h3 className={`text-sm font-semibold truncate ${unreadCount > 0 ? "text-red-700" : "text-gray-900"}`}>{title}</h3>
           <span className="text-xs text-slate-500 shrink-0">{fmtTime(lastTimeMs)}</span>
         </div>
-        <p className="text-xs text-slate-600 truncate">
+        <p className={`text-xs truncate ${unreadCount > 0 ? "text-red-600 font-semibold" : "text-slate-600"}`}>
           {c.lastMessage ? c.lastMessage : "No messages yet"}
+          {unreadCount > 0 && <span className="ml-2 text-xs text-red-500 font-bold">• Unread</span>}
         </p>
       </div>
     </div>
