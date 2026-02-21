@@ -23,9 +23,8 @@ function pickName(c) {
   const last = String(c.lastName || "").trim();
   const fullFromParts = `${first} ${last}`.trim();
   const fullName = String(c.fullName || "").trim();
-  const name = String(c.name || "").trim();
-  // Only use username/fullName/first+last, never email/phone
-  return fullFromParts || fullName || name || (c.firstName && c.lastName ? `${c.firstName} ${c.lastName}` : "Unknown");
+  // Only use first+last or fullName, never email/phone/User/Unknown
+  return fullFromParts || fullName;
 }
 
 function rowKey(c, idx) {
