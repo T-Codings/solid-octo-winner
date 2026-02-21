@@ -110,8 +110,58 @@ export default function MessageInput({ onSend, disabled, selectedContact, curren
           placeholder={disabled ? "Select a contact first" : "Type a message..."}
         />
         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-2 items-center">
-          <img src={voiceIcon} alt="Voice" className="w-6 h-6 opacity-70" />
-          <img src={attachIcon} alt="Attach" className="w-6 h-6 opacity-70" />
+          {/* Voice button */}
+          <button
+            type="button"
+            className="p-1 bg-transparent border-none focus:outline-none"
+            title="Record voice message"
+            onClick={async () => {
+              // Simple browser voice recorder (placeholder)
+              if (!navigator.mediaDevices || !window.MediaRecorder) {
+                alert("Voice recording not supported in this browser.");
+                return;
+              }
+              try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const recorder = new window.MediaRecorder(stream);
+                let audioChunks = [];
+                recorder.ondataavailable = (e) => audioChunks.push(e.data);
+                recorder.onstop = () => {
+                  const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                  // TODO: Upload audioBlob to storage and send URL as message
+                  onSend('[Voice message sent]');
+                  stream.getTracks().forEach(track => track.stop());
+                };
+                recorder.start();
+                setTimeout(() => recorder.stop(), 3000); // Record 3 seconds for demo
+                alert('Recording voice message for 3 seconds...');
+              } catch (err) {
+                alert('Could not access microphone.');
+              }
+            }}
+          >
+            <img src={voiceIcon} alt="Voice" className="w-6 h-6 opacity-70" />
+          </button>
+          {/* Attach button */}
+          <button
+            type="button"
+            className="p-1 bg-transparent border-none focus:outline-none"
+            title="Attach file"
+            onClick={() => {
+              const input = document.createElement('input');
+              input.type = 'file';
+              input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                  // TODO: Upload file and send URL as message
+                  onSend(`[Attachment: ${file.name}]`);
+                }
+              };
+              input.click();
+            }}
+          >
+            <img src={attachIcon} alt="Attach" className="w-6 h-6 opacity-70" />
+          </button>
         </div>
       </div>
       <button

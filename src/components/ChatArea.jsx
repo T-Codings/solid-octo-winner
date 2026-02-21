@@ -295,12 +295,13 @@ export default function ChatArea({ selectedContact, onReadContact }) {
               const isSender = msg.senderId === currentUser.uid;
               // Always use real profile names (firstName + lastName or fullName)
               const getProfileName = (user) => {
-                if (!user) return "Unknown";
+                if (!user) return "";
                 const first = String(user.firstName || "").trim();
                 const last = String(user.lastName || "").trim();
                 const fullFromParts = `${first} ${last}`.trim();
                 const fullName = String(user.fullName || "").trim();
-                return fullFromParts || fullName || "Unknown";
+                // Only use Unknown if all fields are empty
+                return fullFromParts || fullName || "";
               };
               const profile = isSender
                 ? {
@@ -308,7 +309,7 @@ export default function ChatArea({ selectedContact, onReadContact }) {
                     photoURL: currentUser.photoURL || undefined,
                   }
                 : {
-                    name: getProfileName(selectedContact),
+                    name: getProfileName(selectedContact) || (selectedContact && (selectedContact.firstName || "") + " " + (selectedContact.lastName || "")),
                     photoURL: selectedContact.photoURL || undefined,
                   };
               const pinned = false;
