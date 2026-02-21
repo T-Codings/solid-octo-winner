@@ -6,138 +6,158 @@ import sentSound from "../assets/sent.mp3";
 import receivedSound from "../assets/received.mp3";
 import notificationSound from "../assets/notification.mp3";
 import AllIcon from "../assets/all.png";
-import ForwardIcon from "../assets/telegram.png";
-import MoreIcon from "../assets/more2fill.png";
-import ContactList from "./ContactList";
-import pinnedIcon from "../assets/pinned.png";
-import { db } from "../firebaseConfig";
-import { doc, deleteDoc, updateDoc, onSnapshot, setDoc } from "firebase/firestore";
-import { addMessageToChat } from "../utils/addMessageToChat";
-import { useAuth } from "../context/AuthContext";
-import ChatHeader from "./ChatHeader";
-import MessageInput from "./MessageInput";
-import useChatMessages from "./useChatMessages";
-
-// Typing indicator Firestore helper
-function getTypingDocId(a, b) {
-  return [a, b].sort().join("_");
-}
-
-export default function ChatArea({ selectedContact, onReadContact }) {
-  const { currentUser } = useAuth();
-  const [sending, setSending] = useState(false);
-  const { messages, loading } = useChatMessages(currentUser, selectedContact);
-
-  // Sound refs
-  const sentAudio = useRef();
-  const receivedAudio = useRef();
-  const notificationAudio = useRef();
-
-  // Track last message id to detect new incoming messages
-  const lastMsgId = useRef(null);
-  const [menu, setMenu] = useState({ visible: false, x: 0, y: 0, msg: null });
-  const [editingMsgId, setEditingMsgId] = useState(null);
-  const [editText, setEditText] = useState("");
-  const [replyMsg, setReplyMsg] = useState(null);
-  const [pinnedMsgIds, setPinnedMsgIds] = useState([]);
-  const [reactingMsgId, setReactingMsgId] = useState(null);
-  const [reactions, setReactions] = useState({});
-  const [unreadMsgIds, setUnreadMsgIds] = useState([]);
-  const [selectedMsgIds, setSelectedMsgIds] = useState([]);
-  const [multiSelectMode, setMultiSelectMode] = useState(false);
-  const chatAreaRef = useRef(null);
-
-  const [forwardModal, setForwardModal] = useState({ open: false, msg: null });
-  const [forwardSelected, setForwardSelected] = useState([]);
-  const [contacts, setContacts] = useState([]);
-
-  // Typing indicator state
-  const [otherTyping, setOtherTyping] = useState(false);
-
-  // Listen for typing indicator from the other user
-  useEffect(() => {
-    if (!currentUser || !selectedContact) return;
-    const chatId = getTypingDocId(currentUser.uid, selectedContact.uid);
-    const typingDoc = doc(db, "chats", chatId, "meta", "typing");
-    const unsub = onSnapshot(typingDoc, (snap) => {
-      const data = snap.data();
-      // Show typing if the other user is typing
-      setOtherTyping(data && data.typingUid === selectedContact.uid && data.isTyping === true);
-    });
-    return () => unsub();
-  }, [currentUser, selectedContact]);
-
-
-  const handleSend = async (text) => {
-    if (!currentUser || !selectedContact || !text.trim() || sending) return;
-    setSending(true);
-    try {
-      await addMessageToChat(currentUser, selectedContact, text.trim());
-      // Play sent sound
-      if (sentAudio.current) sentAudio.current.play();
-      // Stop typing indicator after sending
-      const chatId = getTypingDocId(currentUser.uid, selectedContact.uid);
-      const typingDoc = doc(db, "chats", chatId, "meta", "typing");
-      await setDoc(typingDoc, { typingUid: currentUser.uid, isTyping: false }, { merge: true });
-    } catch (e) {
-      console.error("Send failed:", e);
-    } finally {
-      setSending(false);
-    }
-  };
-
-  // Play received/notification sound on new incoming message
-  useEffect(() => {
-    if (!messages || !messages.length) return;
-    const lastMsg = messages[messages.length - 1];
-    if (lastMsgId.current && lastMsg.id !== lastMsgId.current) {
-      // Only play if not sent by current user
-      if (lastMsg.senderId !== (currentUser && currentUser.uid)) {
-        if (receivedAudio.current) receivedAudio.current.play();
-        // If window is not focused, play notification sound
-        if (typeof document !== 'undefined' && document.hidden && notificationAudio.current) {
-          notificationAudio.current.play();
-        }
-      }
-    }
-    lastMsgId.current = lastMsg.id;
-  }, [messages, currentUser]);
-
-
-  // Reset unreadCount to 0 when opening this chat
-  React.useEffect(() => {
-    if (!currentUser || !selectedContact) return;
-    import("firebase/firestore").then(({ doc, updateDoc }) => {
-      updateDoc(
-        doc(
-          db,
-          "contacts",
-          currentUser.uid,
-          "list",
-          selectedContact.uid || selectedContact.id
-        ),
-        { unreadCount: 0 }
-      ).then(() => {
-        if (typeof onReadContact === 'function') {
-          onReadContact(selectedContact.uid || selectedContact.id);
-        }
-      }).catch(() => {});
-    });
-  }, [currentUser, selectedContact, onReadContact]);
-
-  if (!selectedContact) {
-    return (
-      <div className="flex flex-col h-full">
-        <div className="flex-1 flex items-center justify-center text-slate-500">
-          Select a contact to start chatting
-        </div>
-      </div>
-    );
-  }
-
-  // Menu actions
-  const handleMenuAction = async (action, msg) => {
-    setMenu({ ...menu, visible: false });
+              return (
+                <div
+                  key={msg.id}
+                  className={`flex items-end ${isSender ? "justify-end" : "justify-start"} gap-2 ${pinned ? "ring-2 ring-yellow-400" : ""} ${unread ? "bg-yellow-50" : ""}`}
+                  style={{ marginBottom: 18 }}
+                  onDoubleClick={(e) => {
+                    if (!multiSelectMode) {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setMenu({
+                        visible: true,
+                        x: e.clientX - rect.left,
+                        y: e.clientY - rect.top,
+                        msg,
+                      });
+                    }
+                  }}
+                  onClick={() => {
+                    if (multiSelectMode) {
+                      setSelectedMsgIds(ids => ids.includes(msg.id) ? ids.filter(id => id !== msg.id) : [...ids, msg.id]);
+                    }
+                  }}
+                >
+                  {multiSelectMode && (
+                    <input
+                      type="checkbox"
+                      checked={selectedMsgIds.includes(msg.id)}
+                      onChange={() => setSelectedMsgIds(ids => ids.includes(msg.id) ? ids.filter(id => id !== msg.id) : [...ids, msg.id])}
+                      className="mr-2 mt-6"
+                      onClick={e => e.stopPropagation()}
+                    />
+                  )}
+                  {/* Receiver: avatar, name, time above, then bubble below */}
+                  {!isSender ? (
+                    <>
+                      <img
+                        src={profile.photoURL}
+                        alt={profile.name}
+                        className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 mr-2 mb-2"
+                        style={{ alignSelf: "flex-start" }}
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                      <div className="flex flex-col items-start max-w-[80%]">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-slate-700 font-semibold text-xs">{profile.name}</span>
+                          <span className="text-xs text-slate-400">
+                            {msg.createdAtMs
+                              ? new Date(msg.createdAtMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                              : ""}
+                          </span>
+                        </div>
+                        {editingMsgId === msg.id ? (
+                          <div className="flex gap-2 items-center">
+                            <input
+                              className="border rounded px-2 py-1 text-sm"
+                              value={editText}
+                              onChange={e => setEditText(e.target.value)}
+                              autoFocus
+                            />
+                            <button className="text-emerald-600 font-bold" onClick={() => handleEditSave(msg)}>Save</button>
+                            <button className="text-gray-500" onClick={() => setEditingMsgId(null)}>Cancel</button>
+                          </div>
+                        ) : (
+                          <div
+                            className="break-words px-4 py-2 rounded-xl shadow text-[16px] bg-white text-left text-gray-800"
+                            style={{ maxWidth: '650px', wordBreak: 'break-word', overflowWrap: 'break-word', marginLeft: 0 }}
+                          >
+                            {/* Voice message playback */}
+                            {msg.text.startsWith('[Voice message sent]') && msg.audioUrl ? (
+                              <button className="text-xs text-blue-600 underline" onClick={() => {
+                                const audio = new Audio(msg.audioUrl);
+                                audio.play();
+                              }}>Play voice message</button>
+                            ) : msg.text.startsWith('[Voice message sent]') ? (
+                              <span className="text-xs text-slate-400">Voice message (no audio attached)</span>
+                            ) : (
+                              msg.text
+                            )}
+                            {reactions[msg.id] && <span className="ml-2 text-xl">{reactions[msg.id]}</span>}
+                            {replyMsg && replyMsg.id === msg.id && (
+                              <span className="ml-2 text-xs text-emerald-600">(Replying)</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex flex-col items-end max-w-[80%]">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs text-slate-400">
+                            {msg.createdAtMs
+                              ? new Date(msg.createdAtMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                              : ""}
+                          </span>
+                          <span className="text-slate-700 font-semibold text-xs">{profile.name}</span>
+                        </div>
+                        {editingMsgId === msg.id ? (
+                          <div className="flex gap-2 items-center">
+                            <input
+                              className="border rounded px-2 py-1 text-sm"
+                              value={editText}
+                              onChange={e => setEditText(e.target.value)}
+                              autoFocus
+                            />
+                            <button className="text-emerald-600 font-bold" onClick={() => handleEditSave(msg)}>Save</button>
+                            <button className="text-gray-500" onClick={() => setEditingMsgId(null)}>Cancel</button>
+                          </div>
+                        ) : (
+                          <div
+                            className="break-words px-4 py-2 rounded-xl shadow-lg text-[16px] bg-gradient-to-br from-sky-500 to-blue-600 text-right text-white border-2 border-sky-400 ring-2 ring-sky-200/40"
+                            style={{ maxWidth: '650px', wordBreak: 'break-word', overflowWrap: 'break-word', marginRight: 0, boxShadow: '0 4px 24px 0 rgba(37,99,235,0.15)' }}
+                          >
+                            {/* Voice message playback */}
+                            {msg.text.startsWith('[Voice message sent]') && msg.audioUrl ? (
+                              <button className="text-xs text-blue-200 underline" onClick={() => {
+                                const audio = new Audio(msg.audioUrl);
+                                audio.play();
+                              }}>Play voice message</button>
+                            ) : msg.text.startsWith('[Voice message sent]') ? (
+                              <span className="text-xs text-slate-200">Voice message (no audio attached)</span>
+                            ) : (
+                              msg.text
+                            )}
+                            {reactions[msg.id] && <span className="ml-2 text-xl">{reactions[msg.id]}</span>}
+                            {replyMsg && replyMsg.id === msg.id && (
+                              <span className="ml-2 text-xs text-emerald-200">(Replying)</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <img
+                        src={profile.photoURL}
+                        alt={profile.name}
+                        className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 ml-2 mb-2"
+                        style={{ alignSelf: "flex-start" }}
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                    </>
+                  )}
+                  {/* Emoji picker for react */}
+                  {reactingMsgId === msg.id && (
+                    <div className="absolute z-50 bg-white border border-gray-200 rounded-xl shadow-lg p-2 flex flex-wrap gap-2 w-64">
+                      {"😀","😂","😍","👍","🙏","🎉","❤️","🔥","🥳","😢","😡","😎","😇","🤔","😏","😬","😱","😴","🤩","😜","🤪","😕","😒","😓","😔","😲","😖","😭","😤","😡","😠","🤬","😷","🤒","🤕","🤢","🤮","🤧","🥳","🥺","🤠","🤡","🤥","🤫","🤭","🧐","🤓","😈","👿","👹","👺","💀","👻","👽","🤖","💩".map(e=>(
+                        <button key={e} className="text-2xl p-1 hover:bg-gray-100 rounded" onClick={()=>handleReact(msg.id,e)}>{e}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
     if (action === "copy") {
       if (multiSelectMode && selectedMsgIds.length > 0) {
         const texts = messages.filter(m => selectedMsgIds.includes(m.id)).map(m => m.text).join("\n");
