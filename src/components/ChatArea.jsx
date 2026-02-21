@@ -109,7 +109,7 @@ export default function ChatArea({ selectedContact, onReadContact }) {
     import("firebase/firestore").then(({ doc, updateDoc }) => {
       updateDoc(
         doc(
-          require("../firebaseConfig").db,
+          db,
           "contacts",
           currentUser.uid,
           "list",
