@@ -84,23 +84,24 @@ export default function ChatArea({ selectedContact, onReadContact }) {
     } finally {
       setSending(false);
     }
-    // Play received/notification sound on new incoming message
-    useEffect(() => {
-      if (!messages || !messages.length) return;
-      const lastMsg = messages[messages.length - 1];
-      if (lastMsgId.current && lastMsg.id !== lastMsgId.current) {
-        // Only play if not sent by current user
-        if (lastMsg.senderId !== (currentUser && currentUser.uid)) {
-          if (receivedAudio.current) receivedAudio.current.play();
-          // If window is not focused, play notification sound
-          if (typeof document !== 'undefined' && document.hidden && notificationAudio.current) {
-            notificationAudio.current.play();
-          }
+  };
+
+  // Play received/notification sound on new incoming message
+  useEffect(() => {
+    if (!messages || !messages.length) return;
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsgId.current && lastMsg.id !== lastMsgId.current) {
+      // Only play if not sent by current user
+      if (lastMsg.senderId !== (currentUser && currentUser.uid)) {
+        if (receivedAudio.current) receivedAudio.current.play();
+        // If window is not focused, play notification sound
+        if (typeof document !== 'undefined' && document.hidden && notificationAudio.current) {
+          notificationAudio.current.play();
         }
       }
-      lastMsgId.current = lastMsg.id;
-    }, [messages, currentUser]);
-  };
+    }
+    lastMsgId.current = lastMsg.id;
+  }, [messages, currentUser]);
 
 
   // Reset unreadCount to 0 when opening this chat
