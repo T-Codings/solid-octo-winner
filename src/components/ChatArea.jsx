@@ -3,6 +3,7 @@ import React, { useMemo, useRef, useState } from "react";
 import sentSound from "../assets/sent.mp3";
 import receivedSound from "../assets/received.mp3";
 import AllIcon from "../assets/all.png";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 
 // make sure these exist in your project:
 import ChatHeader from "./ChatHeader";
@@ -49,6 +50,26 @@ export default function ChatArea({
   const [messages, setMessages] = useState([]);
   const [sending, setSending] = useState(false);
   const [otherTyping, setOtherTyping] = useState(false);
+
+  // Fetch messages for selected contact
+  React.useEffect(() => {
+    if (!selectedContact || !currentUser) {
+      setMessages([]);
+      return;
+    }
+    setLoading(true);
+    const messagesRef = collection(db, "messages");
+    const q = query(
+      messagesRef,
+      where("chatId", "==", selectedContact.id || selectedContact.uid)
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      const msgs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setMessages(msgs);
+      setLoading(false);
+    });
+    return () => unsub();
+  }, [selectedContact, currentUser]);
 
   const [menu, setMenu] = useState({ visible: false, x: 0, y: 0, msg: null });
   const [forwardModal, setForwardModal] = useState({ open: false, msg: null });
