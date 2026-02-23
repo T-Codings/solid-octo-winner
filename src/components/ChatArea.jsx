@@ -112,8 +112,8 @@ export default function ChatArea({
   }
 
   return (
-    <div className="flex flex-col h-full" ref={chatAreaRef}>
-      <div className="sticky top-0 z-10 bg-white">
+    <div className="flex flex-col h-full bg-slate-50 rounded-xl shadow-md">
+      <div className="sticky top-0 z-10 bg-white rounded-t-xl">
         <ChatHeader contact={selectedContact} />
       </div>
 
@@ -122,7 +122,27 @@ export default function ChatArea({
           <div className="text-slate-400 text-center">Loading messages...</div>
         ) : messages.length === 0 ? null : (
           <>
-            {/* ✅ PUT YOUR pinned + regular messages rendering here */}
+            {/* Message bubbles: show both sender and receiver */}
+            {messages.map((msg, idx) => {
+              const isMe = msg.senderId === currentUser?.uid;
+              const avatar = isMe ? myProfile?.photoURL : selectedContact?.photoURL;
+              const name = isMe ? myName : contactName;
+              return (
+                <div key={msg.id || idx} className={`flex items-end ${isMe ? 'justify-end' : 'justify-start'} w-full`}>
+                  {!isMe && (
+                    <img src={avatar || AllIcon} alt={name} className="w-8 h-8 rounded-full mr-2 border border-slate-300" />
+                  )}
+                  <div className={`max-w-xs px-4 py-2 rounded-2xl shadow-sm ${isMe ? 'bg-emerald-50 text-slate-900' : 'bg-white text-slate-800'} flex flex-col`}>
+                    <span className="text-sm font-medium">{name}</span>
+                    <span className="text-base mt-1 mb-2">{msg.text}</span>
+                    <span className="text-xs text-slate-400 mt-1 self-end">{msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                  </div>
+                  {isMe && (
+                    <img src={avatar || AllIcon} alt={name} className="w-8 h-8 rounded-full ml-2 border border-slate-300" />
+                  )}
+                </div>
+              );
+            })}
 
             {/* Popup menu */}
             {menu.visible && menu.msg && (
@@ -296,12 +316,15 @@ export default function ChatArea({
         </div>
       )}
 
-      <MessageInput
-        onSend={handleSend}
-        disabled={sending}
-        selectedContact={selectedContact}
-        currentUser={currentUser}
-      />
+      {/* Fixed input area */}
+      <div className="sticky bottom-0 bg-white rounded-b-xl shadow-md p-3">
+        <MessageInput
+          onSend={handleSend}
+          disabled={sending}
+          selectedContact={selectedContact}
+          currentUser={currentUser}
+        />
+      </div>
 
       {/* Audio elements */}
       <audio ref={sentAudio} src={sentSound} preload="auto" />

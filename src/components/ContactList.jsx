@@ -31,7 +31,7 @@ function rowKey(c, idx) {
   return String(c.uid || c.id || c.email || c.phoneNumber || idx);
 }
 
-function ContactRow({ c, idx, onSelectContact, onOpenMenu }) {
+function ContactRow({ c, idx, onSelectContact, onOpenMenu, selected }) {
   const { currentUser } = useAuth ? useAuth() : { currentUser: null };
   const uid = rowKey(c, idx);
   // Always use profile name and avatar, fallback to default avatar
@@ -71,7 +71,7 @@ function ContactRow({ c, idx, onSelectContact, onOpenMenu }) {
         e.preventDefault();
         onOpenMenu?.(e.clientX, e.clientY, c);
       }}
-      className={`flex items-center gap-3 p-3 cursor-pointer transition hover:bg-sky-100/80 select-none ${unreadCount > 0 ? "bg-sky-50" : ""}`}
+      className={`flex items-center gap-3 p-3 cursor-pointer transition hover:bg-emerald-100 select-none rounded-xl mb-1 ${unreadCount > 0 ? "bg-emerald-50" : "bg-white"} ${selected ? "ring-2 ring-emerald-400 bg-emerald-50" : ""}`}
     >
       <div className="relative">
         <img
@@ -109,7 +109,7 @@ function ContactRow({ c, idx, onSelectContact, onOpenMenu }) {
   );
 }
 
-export default function ContactList({ contacts = [], onSelectContact, onTogglePin, readContacts = [] }) {
+export default function ContactList({ contacts = [], onSelectContact, onTogglePin, readContacts = [], selectedContactId }) {
   const PAGE_SIZE = 20;
   // Only contacts with isPinned === true go in pinnedContacts
   const pinnedContacts = useMemo(
@@ -144,6 +144,16 @@ export default function ContactList({ contacts = [], onSelectContact, onTogglePi
     () => allUnpinnedSorted.slice(0, PAGE_SIZE * page),
     [allUnpinnedSorted, page]
   );
+
+  // Search state
+  const [search, setSearch] = useState("");
+  const filteredContacts = useMemo(() => {
+    if (!search.trim()) return contacts;
+    return contacts.filter(c => {
+      const name = pickName(c).toLowerCase();
+      return name.includes(search.toLowerCase());
+    });
+  }, [contacts, search]);
 
   // ✅ WhatsApp/Discord style right-click menu state
   const [menu, setMenu] = useState(null); // {x, y, contact}
@@ -183,7 +193,18 @@ export default function ContactList({ contacts = [], onSelectContact, onTogglePi
   }, [menu]);
 
   return (
-    <div className="bg-white relative">
+    <div className="bg-slate-50 min-h-screen w-full max-w-xs flex flex-col shadow-lg rounded-r-xl border-r border-slate-200">
+      {/* Search bar */}
+      <div className="px-4 pt-4 pb-2">
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search contacts..."
+          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+        />
+      </div>
+
       {/* PINNED header (counted) */}
       <div className="px-3 pt-3">
         <div className="rounded-2xl bg-slate-100 p-2">
@@ -212,6 +233,7 @@ export default function ContactList({ contacts = [], onSelectContact, onTogglePi
                 idx={idx}
                 onSelectContact={onSelectContact}
                 onOpenMenu={openMenu}
+                selected={selectedContactId === (c.id || c.uid)}
               />
             ))}
           </div>
@@ -247,6 +269,7 @@ export default function ContactList({ contacts = [], onSelectContact, onTogglePi
                   idx={idx}
                   onSelectContact={onSelectContact}
                   onOpenMenu={openMenu}
+                  selected={selectedContactId === (c.id || c.uid)}
                 />
               ))}
             </div>
