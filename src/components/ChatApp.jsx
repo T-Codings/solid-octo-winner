@@ -12,7 +12,7 @@ function ChatApp() {
       <Sidebar onSelectContact={setSelectedContact} />
 
       {/* Chat area for selected contact */}
-      <ChatArea contact={selectedContact} setTypingUser={setTypingUser} />
+      <ChatArea selectedContact={selectedContact} setTypingUser={setTypingUser} />
     </div>
   );
 }
