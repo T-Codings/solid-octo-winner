@@ -4,10 +4,10 @@ import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 import { useAuth } from "../context/AuthContext";
 
+const Avatar = `${import.meta.env.BASE_URL}avatar.png`;
+
 import PinnedIcon from "../assets/pinned.png";
 import AllIcon from "../assets/all.png";
-
-const Avatar = `${import.meta.env.BASE_URL}avatar.png`;
 
 function fmtTime(ms) {
   if (!ms) return "";
@@ -18,69 +18,65 @@ function fmtTime(ms) {
   }
 }
 
-// ✅ no "User/Unknown"
-function displayNameOf(c) {
-  const full = String(c?.fullName || "").trim();
-  if (full) return full;
-
-  const first = String(c?.firstName || "").trim();
-  const last = String(c?.lastName || "").trim();
-  const composed = `${first} ${last}`.trim();
-  if (composed) return composed;
-
-  // allowed fallback (still a real identifier)
-  const contact = String(c?.contact || "").trim();
-  if (contact) return contact;
-
-  return "";
+function pickName(c) {
+  const first = String(c.firstName || "").trim();
+  const last = String(c.lastName || "").trim();
+  const fullFromParts = `${first} ${last}`.trim();
+  const fullName = String(c.fullName || "").trim();
+  // Only use first+last or fullName, never email/phone/User/Unknown
+  return fullFromParts || fullName;
 }
 
-function contactUidOf(c, idx) {
-  // ✅ stable + correct: use uid/id only
-  return String(c?.uid || c?.id || idx);
+function rowKey(c, idx) {
+  return String(c.uid || c.id || c.email || c.phoneNumber || idx);
 }
 
-function normalizeContact(c, idx) {
-  const uid = c?.uid || c?.id || contactUidOf(c, idx);
-  return { ...c, uid, id: c?.id || uid };
-}
-
-function ContactRow({ c, idx, onSelectContact, onOpenMenu, selected }) {
-  const { currentUser } = useAuth();
-  const contact = normalizeContact(c, idx);
-  const uid = contact.uid;
-
-  const title = displayNameOf(contact);
-  const avatar = contact.photoURL || Avatar;
-
-  const lastTimeMs = contact.lastMessageAtMs || contact.updatedAtMs || 0;
-  const unreadCount = Number(contact.unreadCount || 0);
-
-  const isOnline = Boolean(contact.isOnline);
-
+function ContactRow({ c, idx, onSelectContact, onOpenMenu }) {
+  const { currentUser } = useAuth ? useAuth() : { currentUser: null };
+  const uid = rowKey(c, idx);
+  // Always use profile name and avatar, fallback to default avatar
+  const title = pickName(c);
+  const avatar = c.photoURL || Avatar;
+  const lastTimeMs = c.lastMessageAtMs || c.updatedAtMs || 0;
+  const isOnline = c.isOnline ?? (c.uid ? (c.uid.charCodeAt(0) % 2 === 0) : false);
+  const unreadCount = c.unreadCount || 0;
   const handleUnreadClick = async (e) => {
     e.stopPropagation();
     if (!currentUser) return;
+    const contactId = c.id || c.uid;
+    if (!contactId) return;
     try {
-      await updateDoc(doc(db, "contacts", currentUser.uid, "list", uid), { unreadCount: 0 });
+      await updateDoc(
+        doc(db, "contacts", currentUser.uid, "list", contactId),
+        { unreadCount: 0 }
+      );
     } catch {}
   };
-
+  const handleDateClick = async (e) => {
+    e.stopPropagation();
+    if (!currentUser) return;
+    const contactId = c.id || c.uid;
+    if (!contactId) return;
+    try {
+      await updateDoc(
+        doc(db, "contacts", currentUser.uid, "list", contactId),
+        { unreadCount: 1 }
+      );
+    } catch {}
+  };
   return (
     <div
-      onClick={() => onSelectContact?.(contact)}
+      onClick={() => onSelectContact?.({ ...c, uid, id: c.id || uid })}
       onContextMenu={(e) => {
         e.preventDefault();
-        onOpenMenu?.(e.clientX, e.clientY, contact);
+        onOpenMenu?.(e.clientX, e.clientY, c);
       }}
-      className={`flex items-center gap-3 p-3 cursor-pointer transition hover:bg-emerald-100 select-none rounded-xl mb-1 ${
-        unreadCount > 0 ? "bg-emerald-50" : "bg-white"
-      } ${selected ? "ring-2 ring-emerald-400 bg-emerald-50" : ""}`}
+      className={`flex items-center gap-3 p-3 cursor-pointer transition hover:bg-sky-100/80 select-none ${unreadCount > 0 ? "bg-sky-50" : ""}`}
     >
       <div className="relative">
         <img
           src={avatar}
-          alt={title || ""}
+          alt={title}
           className="w-12 h-12 rounded-full object-cover border-2 border-gray-300"
           onError={(e) => {
             if (e.currentTarget.dataset.fallbackApplied) return;
@@ -89,51 +85,33 @@ function ContactRow({ c, idx, onSelectContact, onOpenMenu, selected }) {
           }}
         />
         <span
-          className={`absolute bottom-1 right-1 w-3 h-3 rounded-full border-2 border-white ${
-            isOnline ? "bg-emerald-400" : "bg-gray-400"
-          }`}
+          className={`absolute bottom-1 right-1 w-3 h-3 rounded-full border-2 border-white ${isOnline ? "bg-emerald-400" : "bg-gray-400"}`}
           title={isOnline ? "Online" : "Offline"}
         />
       </div>
-
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <h3 className={`text-sm font-semibold truncate ${unreadCount > 0 ? "text-sky-700" : "text-gray-900"}`}>
-            {title || "\u00A0"}
-          </h3>
-
+          <h3 className={`text-sm font-semibold truncate ${unreadCount > 0 ? "text-sky-700" : "text-gray-900"}`}>{title}</h3>
           <div className="flex flex-col items-end">
-            <span className="text-xs text-slate-500 shrink-0">{fmtTime(lastTimeMs)}</span>
-
+            <span className="text-xs text-slate-500 shrink-0 cursor-pointer" onClick={unreadCount === 0 ? handleDateClick : undefined}>{fmtTime(lastTimeMs)}</span>
             {unreadCount > 0 && (
-              <span
-                className="mt-1 bg-sky-500 text-white text-xs font-bold rounded-full px-2 py-0.5 min-w-[22px] text-center cursor-pointer"
-                onClick={handleUnreadClick}
-                title="Mark as read"
-              >
+              <span className="mt-1 bg-sky-500 text-white text-xs font-bold rounded-full px-2 py-0.5 min-w-[22px] text-center cursor-pointer" onClick={handleUnreadClick} title="Mark as read">
                 {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
           </div>
         </div>
-
         <p className={`text-xs truncate ${unreadCount > 0 ? "text-sky-600 font-semibold" : "text-slate-600"}`}>
-          {contact.lastMessage ? contact.lastMessage : "No messages yet"}
+          {c.lastMessage ? c.lastMessage : "No messages yet"}
         </p>
       </div>
     </div>
   );
 }
 
-export default function ContactList({
-  contacts = [],
-  onSelectContact,
-  onTogglePin,
-  readContacts = [],
-  selectedContactId,
-}) {
+export default function ContactList({ contacts = [], onSelectContact, onTogglePin, readContacts = [] }) {
   const PAGE_SIZE = 20;
-
+  // Only contacts with isPinned === true go in pinnedContacts
   const pinnedContacts = useMemo(
     () =>
       contacts
@@ -141,11 +119,13 @@ export default function ContactList({
         .slice()
         .sort(
           (a, b) =>
-            (b.updatedAtMs || b.lastMessageAtMs || 0) - (a.updatedAtMs || a.lastMessageAtMs || 0)
+            (b.updatedAtMs || b.lastMessageAtMs || 0) -
+            (a.updatedAtMs || a.lastMessageAtMs || 0)
         ),
     [contacts]
   );
 
+  // ALL section: only contacts with isPinned !== true
   const allUnpinnedSorted = useMemo(
     () =>
       contacts
@@ -153,29 +133,19 @@ export default function ContactList({
         .slice()
         .sort(
           (a, b) =>
-            (b.updatedAtMs || b.lastMessageAtMs || 0) - (a.updatedAtMs || a.lastMessageAtMs || 0)
+            (b.updatedAtMs || b.lastMessageAtMs || 0) -
+            (a.updatedAtMs || a.lastMessageAtMs || 0)
         ),
     [contacts]
   );
 
   const [page, setPage] = useState(1);
-  const allUnpinned = useMemo(() => allUnpinnedSorted.slice(0, PAGE_SIZE * page), [allUnpinnedSorted, page]);
+  const allUnpinned = useMemo(
+    () => allUnpinnedSorted.slice(0, PAGE_SIZE * page),
+    [allUnpinnedSorted, page]
+  );
 
-  const [search, setSearch] = useState("");
-
-  // ✅ filter uses displayName (never Unknown)
-  const filteredPinned = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return pinnedContacts;
-    return pinnedContacts.filter((c) => displayNameOf(c).toLowerCase().includes(q));
-  }, [pinnedContacts, search]);
-
-  const filteredAll = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return allUnpinned;
-    return allUnpinned.filter((c) => displayNameOf(c).toLowerCase().includes(q));
-  }, [allUnpinned, search]);
-
+  // ✅ WhatsApp/Discord style right-click menu state
   const [menu, setMenu] = useState(null); // {x, y, contact}
   const menuRef = useRef(null);
 
@@ -183,11 +153,14 @@ export default function ContactList({
     const pad = 8;
     const w = 200;
     const h = 56;
+
     const xx = Math.min(x, window.innerWidth - w - pad);
     const yy = Math.min(y, window.innerHeight - h - pad);
+
     setMenu({ x: xx, y: yy, contact });
   };
 
+  // close menu on outside click / esc / scroll
   useEffect(() => {
     if (!menu) return;
 
@@ -210,26 +183,17 @@ export default function ContactList({
   }, [menu]);
 
   return (
-    <div className="bg-slate-50 min-h-screen w-full max-w-xs flex flex-col shadow-lg rounded-r-xl border-r border-slate-200">
-      {/* Search bar */}
-      <div className="px-4 pt-4 pb-2">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search contacts..."
-          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
-        />
-      </div>
-
-      {/* PINNED header */}
+    <div className="bg-white relative">
+      {/* PINNED header (counted) */}
       <div className="px-3 pt-3">
         <div className="rounded-2xl bg-slate-100 p-2">
           <div className="flex items-center gap-3 px-3 py-2">
             <img src={PinnedIcon} alt="Pinned" className="w-5 h-5 object-contain" />
-            <span className="text-sm font-extrabold tracking-wide text-slate-900">PINNED</span>
+            <span className="text-sm font-extrabold tracking-wide text-slate-900">
+              PINNED
+            </span>
             <span className="ml-auto text-xs font-bold px-2 py-1 rounded-full bg-white shadow-sm text-slate-700">
-              {filteredPinned.length}
+              {pinnedContacts.length}
             </span>
           </div>
         </div>
@@ -237,18 +201,17 @@ export default function ContactList({
 
       {/* Pinned list */}
       <div className="mt-2">
-        {filteredPinned.length === 0 ? (
+        {pinnedContacts.length === 0 ? (
           <p className="px-4 py-3 text-slate-500 text-sm">No pinned chats yet</p>
         ) : (
           <div className="divide-y divide-gray-200">
-            {filteredPinned.map((c, idx) => (
+            {pinnedContacts.map((c, idx) => (
               <ContactRow
-                key={contactUidOf(c, idx)}
-                c={c}
+                key={rowKey(c, idx)}
+                c={{ ...c, unreadCount: (readContacts.includes(c.id || c.uid) ? 0 : c.unreadCount) }}
                 idx={idx}
                 onSelectContact={onSelectContact}
                 onOpenMenu={openMenu}
-                selected={selectedContactId === (c.id || c.uid)}
               />
             ))}
           </div>
@@ -260,7 +223,7 @@ export default function ContactList({
         <div className="h-px bg-gray-200" />
       </div>
 
-      {/* ALL header */}
+      {/* ALL header (NOT counted) */}
       <div className="px-3">
         <div className="rounded-2xl bg-slate-100 p-2">
           <div className="flex items-center gap-3 px-3 py-2">
@@ -272,23 +235,21 @@ export default function ContactList({
 
       {/* All list */}
       <div className="mt-2">
-        {filteredAll.length === 0 ? (
+        {allUnpinned.length === 0 ? (
           <p className="px-4 py-3 text-slate-500 text-sm">No contacts</p>
         ) : (
           <>
             <div className="divide-y divide-gray-200">
-              {filteredAll.map((c, idx) => (
+              {allUnpinned.map((c, idx) => (
                 <ContactRow
-                  key={contactUidOf(c, idx)}
-                  c={c}
+                  key={rowKey(c, idx)}
+                  c={{ ...c, unreadCount: (readContacts.includes(c.id || c.uid) ? 0 : c.unreadCount) }}
                   idx={idx}
                   onSelectContact={onSelectContact}
                   onOpenMenu={openMenu}
-                  selected={selectedContactId === (c.id || c.uid)}
                 />
               ))}
             </div>
-
             {allUnpinned.length < allUnpinnedSorted.length && (
               <div className="flex justify-center py-3">
                 <button
@@ -303,7 +264,7 @@ export default function ContactList({
         )}
       </div>
 
-      {/* Context Menu (pin) */}
+      {/* ✅ Context Menu */}
       {menu && (
         <div className="fixed inset-0 z-[9999]" onContextMenu={(e) => e.preventDefault()}>
           <div
@@ -319,6 +280,7 @@ export default function ContactList({
               }}
               className="w-full px-4 py-3 text-left text-sm font-semibold hover:bg-gray-50 flex items-center justify-between"
             >
+              {menu.contact?.isPinned ? "" : ""}
               <img src={PinnedIcon} alt="pin" className="w-4 h-4 opacity-80" />
             </button>
           </div>
