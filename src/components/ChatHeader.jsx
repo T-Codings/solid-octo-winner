@@ -7,7 +7,7 @@ import { doc, collection, getDocs, writeBatch, deleteDoc, setDoc, serverTimestam
 import { db } from "../firebaseConfig";
 import phoneIcon from "../assets/phonefill.png";
 import videoIcon from "../assets/majesticonsvideo.png";
-import moreIcon from "../assets/more2fill.png";
+import moreIcon from "../assets/more.png";
 import onlineIndicator from "../assets/Rectangle6.png";
 // Local safeName utility (not exported from updateLastMessage.js)
 function safeName(u) {
