@@ -11,7 +11,7 @@ import Chatties from "../assets/Chatties.png";
 import CreateNewChat from "../assets/Createnewchat.png";
 import { Search } from "lucide-react";
 
-function Sidebar({ onSelectContact, readContacts = [] }) {
+function Sidebar({ onSelectContact, onContactsLoaded, readContacts = [] }) {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
@@ -19,8 +19,6 @@ function Sidebar({ onSelectContact, readContacts = [] }) {
   const [loadingContacts, setLoadingContacts] = useState(true);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
-  // Track which contacts have been read in this session
-  // const [readContacts, setReadContacts] = useState([]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -34,14 +32,22 @@ function Sidebar({ onSelectContact, readContacts = [] }) {
       ref,
       (snap) => {
         const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
         rows.sort((a, b) => {
           const pinA = a.isPinned ? 1 : 0;
           const pinB = b.isPinned ? 1 : 0;
           if (pinB !== pinA) return pinB - pinA;
-          return (b.updatedAtMs || b.lastMessageAtMs || 0) - (a.updatedAtMs || a.lastMessageAtMs || 0);
+          return (
+            (b.updatedAtMs || b.lastMessageAtMs || 0) -
+            (a.updatedAtMs || a.lastMessageAtMs || 0)
+          );
         });
+
         setContacts(rows);
         setLoadingContacts(false);
+
+        // ✅ send contacts up to ChatApp for forward modal
+        onContactsLoaded?.(rows);
       },
       (err) => {
         setError(err?.message || "Failed to load contacts.");
@@ -50,7 +56,7 @@ function Sidebar({ onSelectContact, readContacts = [] }) {
     );
 
     return () => unsub();
-  }, [currentUser]);
+  }, [currentUser, onContactsLoaded]);
 
   const filteredContacts = useMemo(() => {
     const q = String(query || "").trim().toLowerCase();
@@ -59,33 +65,35 @@ function Sidebar({ onSelectContact, readContacts = [] }) {
     return contacts.filter((c) => {
       const name = (
         c.fullName ||
-        c.name ||
-        `${c.firstName || ""} ${c.lastName || ""}`
+        `${c.firstName || ""} ${c.lastName || ""}` ||
+        c.contact ||
+        c.email ||
+        ""
       )
         .trim()
         .toLowerCase();
 
       const email = String(c.email || "").toLowerCase();
-      const phone = String(c.phoneNumber || "").toLowerCase();
+      const phone = String(c.phoneNumber || c.contact || "").toLowerCase();
 
       return name.includes(q) || email.includes(q) || phone.includes(q);
     });
   }, [contacts, query]);
 
-  // ✅ When a contact is clicked, go to chat route
+  // ✅ When a contact is clicked
   const handleSelectContact = (c) => {
-    const contactId = c.id || c.uid; // doc id is usually the contact uid
-    if (!contactId) return;
-    navigate(`/chat/${contactId}`);
-    if (onSelectContact) onSelectContact();
+    if (!c) return;
+
+    const uid = c.uid || c.id; // doc id is usually uid
+    const normalized = { ...c, uid, id: c.id || uid };
+
+    // ✅ pass selected contact up to ChatApp (important!)
+    onSelectContact?.(normalized);
+
+    // Optional: if you still want URL to change:
+    // navigate(`/chat/${uid}`);
   };
 
-  // Handler to mark a contact as read in the UI
-  // const handleReadContact = (contactId) => {
-  //   setReadContacts((prev) => prev.includes(contactId) ? prev : [...prev, contactId]);
-  // };
-
-  // ✅ Toggle pin and save to Firestore
   const handleTogglePin = async (c) => {
     if (!currentUser) return;
     const contactId = c.id || c.uid;
@@ -104,13 +112,24 @@ function Sidebar({ onSelectContact, readContacts = [] }) {
     <div className="w-[340px] border-r border-gray-300 h-screen overflow-y-auto bg-white">
       <div className="p-4">
         <div className="flex items-center gap-2">
-          <img src={Chatties} alt="chatties" className="w-[100px] h-10 object-contain" />
-          <img src={MingcuteChat} alt="mingcute chat" className="w-10 h-7 object-contain" />
+          <img
+            src={Chatties}
+            alt="ChatApp"
+            className="w-[100px] h-10 object-contain"
+          />
+          <img
+            src={MingcuteChat}
+            alt="ChatApp icon"
+            className="w-10 h-7 object-contain"
+          />
         </div>
 
         <div className="mt-4 flex items-center gap-2">
           <div className="flex-1 relative">
-            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
+            <Search
+              size={18}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600"
+            />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -126,7 +145,11 @@ function Sidebar({ onSelectContact, readContacts = [] }) {
             title="Create new chat"
             onClick={() => console.log("Create new chat clicked")}
           >
-            <img src={CreateNewChat} alt="Create new chat" className="w-7 h-7 object-contain" />
+            <img
+              src={CreateNewChat}
+              alt="Create new chat"
+              className="w-7 h-7 object-contain"
+            />
           </button>
         </div>
       </div>
@@ -134,10 +157,15 @@ function Sidebar({ onSelectContact, readContacts = [] }) {
       {loadingContacts && (
         <div className="flex flex-col items-center justify-center py-8">
           <span className="w-8 h-8 mb-2 border-4 border-sky-400 border-t-transparent rounded-full animate-spin"></span>
-          <span className="text-sky-600 font-semibold text-base">Loading contacts...</span>
+          <span className="text-sky-600 font-semibold text-base">
+            Loading contacts...
+          </span>
         </div>
       )}
-      {!loadingContacts && error && <p className="p-4 text-red-600 text-center">{error}</p>}
+
+      {!loadingContacts && error && (
+        <p className="p-4 text-red-600 text-center">{error}</p>
+      )}
 
       <ContactList
         contacts={filteredContacts}
