@@ -1,3 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 20px #10b981, 0 0 40px #10b981; }
+  50% { box-shadow: 0 0 40px #10b981, 0 0 80px #10b981; }
+}
+.animate-glow {
+  animation: glow 1.5s infinite alternate;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fadeIn {
+  animation: fadeIn 1s ease-in;
+}
