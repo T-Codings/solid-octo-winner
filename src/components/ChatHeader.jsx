@@ -1,13 +1,10 @@
-
-
-
 import React, { useMemo, useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { doc, collection, getDocs, writeBatch, deleteDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 import phoneIcon from "../assets/phonefill.png";
 import videoIcon from "../assets/majesticonsvideo.png";
-import moreIcon from "../assets/more2fill.png";
+import moreIcon from "../assets/more.png";
 import onlineIndicator from "../assets/Rectangle6.png";
 // Local safeName utility (not exported from updateLastMessage.js)
 function safeName(u) {
@@ -188,164 +185,43 @@ export default function ChatAreaHeader({ contact }) {
   }
 
   return (
-    // ✅ STICKY HEADER
-    <div className="sticky top-0 z-40 flex items-center gap-3 p-4 font-semibold border-b bg-white">
-      {/* Arrow button placeholder, if needed, can be added here */}
-      <div className="relative ml-12">
-        <img
-          src={contact.photoURL || avatarFallback}
-          alt={displayName}
-          className="w-10 h-10 rounded-full object-cover border-2 border-gray-300"
-          onError={(e) => {
-            if (e.currentTarget.dataset.fallbackApplied) return;
-            e.currentTarget.dataset.fallbackApplied = "1";
-            e.currentTarget.src = avatarFallback;
-          }}
-        />
-        {/* Online indicator */}
-        <img
-          src={onlineIndicator}
-          alt="Online"
-          className="absolute bottom-0 text-sky-500 right-0 w-4 h-4"
-          style={{ borderRadius: '50%', border: '2px solid white', background: 'white' }}
-        />
-      </div>
-
-      <div className="min-w-0 flex-1">
-        <div className="font-semibold text-gray-900 truncate">{displayName}</div>
-        {/* optional status line if you have it */}
-        {typeof contact?.isOnline === "boolean" && (
-          <div className="text-xs text-gray-500 text-sky-500">
-            {contact.isOnline ? "Online" : "Offline"}
-          </div>
-        )}
-      </div>
-
-      <div className="flex items-center gap-2">
-        <button
-          title="Call"
-          className="p-2 hover:bg-gray-100 rounded-full disabled:opacity-60"
-          disabled={busy}
-        >
-          <img src={phoneIcon} alt="Call" className="w-6 h-6" />
-        </button>
-
-        <button
-          title="Video"
-          className="p-2 hover:bg-gray-100 rounded-full disabled:opacity-60"
-          disabled={busy}
-        >
-          <img src={videoIcon} alt="Video" className="w-6 h-6" />
-        </button>
-
-        <div className="relative" ref={menuRef}>
-          <button
-            title="More"
-            className="p-2 hover:bg-gray-100 rounded-full disabled:opacity-60"
-            onClick={() => setMenuOpen((v) => !v)}
-            disabled={busy}
-          >
-            <img src={moreIcon} alt="More" className="w-6 h-6" />
-          </button>
-
-          {menuOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
-              <button
-                className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-800"
-                onClick={handleViewContact}
-              >
-                View Contact
-              </button>
-
-              <button
-                className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-800"
-                onClick={() => setMenuOpen(false)}
-              >
-                Media, Links, Docs
-              </button>
-
-              <button
-                className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-800"
-                onClick={() => setMenuOpen(false)}
-              >
-                Search
-              </button>
-
-              <button
-                className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-800"
-                onClick={handleMute}
-                disabled={busy}
-              >
-                {muted ? "Unmute Notifications" : "Mute Notifications"}
-              </button>
-
-              <button
-                className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-800 disabled:opacity-60"
-                onClick={handleDeleteMessages}
-                disabled={busy}
-              >
-                Clear Messages
-              </button>
-
-              <button
-                className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600 disabled:opacity-60"
-                onClick={handleDeleteChat}
-                disabled={busy}
-              >
-                Delete Chat
-              </button>
-            </div>
+    <div className="flex items-center justify-between px-4 py-3 bg-white rounded-t-xl shadow-md border-b border-slate-200">
+      <div className="flex items-center gap-4">
+        <div className="relative">
+          <img
+            src={contact.photoURL || avatarFallback}
+            alt={displayName}
+            className="w-14 h-14 rounded-full object-cover border-2 border-emerald-200 shadow-sm"
+          />
+          {/* Online indicator */}
+          {contact.isOnline && (
+            <span className="absolute bottom-1 right-1 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
+          )}
+        </div>
+        <div className="flex flex-col">
+          <span className="font-bold text-lg text-slate-900">{displayName}</span>
+          {contact.status && (
+            <span className="text-xs text-slate-500 mt-1">{contact.status}</span>
           )}
         </div>
       </div>
-
-      {/* ✅ Modal moved OUTSIDE the dropdown so it renders correctly */}
-      {showContact && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          onMouseDown={(e) => {
-            // click outside closes
-            if (e.target === e.currentTarget) handleCloseContact();
-          }}
-        >
-          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
-            <div className="flex items-center gap-4 mb-4">
-              <img
-                src={contact.photoURL || avatarFallback}
-                alt={displayName}
-                className="w-16 h-16 rounded-full object-cover border border-gray-200"
-                onError={(e) => {
-                  if (e.currentTarget.dataset.fallbackApplied) return;
-                  e.currentTarget.dataset.fallbackApplied = "1";
-                  e.currentTarget.src = avatarFallback;
-                }}
-              />
-              <div className="min-w-0">
-                <div className="font-bold text-lg text-gray-900 truncate">
-                  {displayName}
-                </div>
-                {contact.email && (
-                  <div className="text-gray-500 text-sm truncate">
-                    {contact.email}
-                  </div>
-                )}
-                {contact.phoneNumber && (
-                  <div className="text-gray-500 text-sm truncate">
-                    {contact.phoneNumber}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2">
-              <button
-                className="px-4 py-2 rounded-lg bg-gray-100 text-gray-800 font-semibold hover:bg-gray-200"
-                onClick={handleCloseContact}
-              >
-                Close
-              </button>
-            </div>
-          </div>
+      <div className="flex items-center gap-3">
+        <button className="p-2 rounded-full hover:bg-slate-100 transition">
+          <img src={phoneIcon} alt="Call" className="w-6 h-6" />
+        </button>
+        <button className="p-2 rounded-full hover:bg-slate-100 transition">
+          <img src={videoIcon} alt="Video" className="w-6 h-6" />
+        </button>
+        <button className="p-2 rounded-full hover:bg-slate-100 transition" onClick={() => setMenuOpen(!menuOpen)}>
+          <img src={moreIcon} alt="More" className="w-6 h-6" />
+        </button>
+      </div>
+      {/* Dropdown menu example */}
+      {menuOpen && (
+        <div ref={menuRef} className="absolute top-16 right-6 bg-white border border-slate-200 rounded-xl shadow-lg py-2 px-4 z-50">
+          <button className="block w-full text-left py-2 hover:bg-slate-100 rounded">Mute chat</button>
+          <button className="block w-full text-left py-2 hover:bg-slate-100 rounded">View profile</button>
+          <button className="block w-full text-left py-2 hover:bg-slate-100 rounded text-red-600">Delete chat</button>
         </div>
       )}
     </div>
