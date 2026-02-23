@@ -16,18 +16,26 @@ function Sidebar({ onSelectContact, readContacts = [] }) {
     setLoading(true);
     setError("");
     const ref = collection(db, "contacts", currentUser.uid, "list");
-    const unsub = onSnapshot(
-      ref,
-      (snap) => {
-        const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        setContacts(rows);
-        setLoading(false);
-      },
-      (err) => {
-        setError(err?.message || "Failed to load contacts.");
-        setLoading(false);
-      }
-    );
+    const unsub = onSnapshot(ref, (snap) => {
+      let updated = false;
+      const rows = snap.docs.map((d) => {
+        const data = { id: d.id, ...d.data() };
+        // Optionally, you can check for changes here and set updated = true if needed
+        return data;
+      });
+      setContacts((prev) => {
+        // If the new rows are different from previous, update
+        if (JSON.stringify(prev) !== JSON.stringify(rows)) {
+          updated = true;
+          return rows;
+        }
+        return prev;
+      });
+      if (updated) setLoading(false);
+    }, (err) => {
+      setError(err?.message || "Failed to load contacts.");
+      setLoading(false);
+    });
     return () => unsub();
   }, [currentUser]);
 
@@ -48,3 +56,14 @@ function Sidebar({ onSelectContact, readContacts = [] }) {
 }
 
 export default Sidebar;
+
+
+
+
+
+
+
+
+
+
+ 
