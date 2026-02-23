@@ -9,7 +9,7 @@ import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 
 // if you use these icons, import them (or remove the buttons that use them)
-import ForwardIcon from "../assets/forward.png";
+import ForwardIcon from "../assets/forward.jpg";
 import MoreIcon from "../assets/more.png"; // fixed import
 import ReplyIcon from "../assets/reply.png"; // added reply icon
 
