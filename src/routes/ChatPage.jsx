@@ -1,6 +1,6 @@
 // src/routes/ChatPage.jsx
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 import { useAuth } from "../context/AuthContext";
@@ -9,6 +9,10 @@ import Sidebar from "../components/Sidebar";
 import ChatArea from "../components/ChatArea";
 
 export default function ChatPage() {
+    // Handler to mark contact as read in sidebar
+    const handleReadContact = (contactId) => {
+      setReadContacts((prev) => prev.includes(contactId) ? prev : [...prev, contactId]);
+    };
   const { currentUser } = useAuth();
   const { contactId } = useParams();
 
@@ -20,12 +24,8 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (!currentUser || !contactId) return;
-
     setLoading(true);
-
-    // ✅ Listen to ONLY the selected contact doc
     const ref = doc(db, "contacts", currentUser.uid, "list", contactId);
-
     const unsub = onSnapshot(
       ref,
       (snap) => {
@@ -42,28 +42,28 @@ export default function ChatPage() {
         setLoading(false);
       }
     );
-
     return () => unsub();
   }, [currentUser, contactId]);
 
+  const navigate = useNavigate ? useNavigate() : (() => {});
   const isMobile = window.innerWidth < 768;
-  // Handler to mark contact as read in sidebar
-  const handleReadContact = (contactId) => {
-    setReadContacts((prev) => prev.includes(contactId) ? prev : [...prev, contactId]);
+  const handleSidebarSelectContact = (contact) => {
+    const contactId = contact.id || contact.uid;
+    if (!contactId) return;
+    navigate(`/chat/${contactId}`);
+    setSelectedContact(contact);
   };
 
   return (
     <div className="h-[calc(100vh-64px)] flex bg-white relative">
       {/* Desktop sidebar */}
       <div className="hidden md:block">
-        <Sidebar onSelectContact={() => {}} readContacts={readContacts} />
+        <Sidebar onSelectContact={handleSidebarSelectContact} readContacts={readContacts} />
       </div>
       {/* Mobile: show only sidebar if no contact selected */}
       {isMobile && !contactId && (
         <div className="block md:hidden w-full h-full">
-          <Sidebar onSelectContact={(c) => {
-            window.location.href = `/chat/${c.id || c.uid}`;
-          }} readContacts={readContacts} />
+          <Sidebar onSelectContact={handleSidebarSelectContact} readContacts={readContacts} />
         </div>
       )}
       {/* Mobile: show only chat if contact selected */}
