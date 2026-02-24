@@ -125,7 +125,7 @@ export default function ChatArea({
   if (!selectedContact) {
     return (
       <div className="flex flex-col h-full">
-        <div className="flex-1 flex items-center justify-center text-slate-500">
+        <div className="flex-1 flex items-center justify-center text-slate-600">
           Select a contact to start chatting
         </div>
       </div>
@@ -133,12 +133,12 @@ export default function ChatArea({
   }
 
   return (
-    <div className="flex flex-col h-full" ref={chatAreaRef}>
+    <div className="flex flex-col h-full bg-white" ref={chatAreaRef}>
       <div className="sticky top-0 z-10 bg-white">
         <ChatHeader contact={selectedContact} />
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-2 relative">
+      <div className="flex-1 overflow-y-auto p-4 space-y-2 relative bg-white">
         {loading ? (
           <div className="text-slate-400 text-center">Loading messages...</div>
         ) : messages.length === 0 ? null : (

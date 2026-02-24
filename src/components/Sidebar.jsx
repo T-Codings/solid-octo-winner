@@ -45,7 +45,7 @@ function Sidebar({ onSelectContact, readContacts = [] }) {
 
   return (
     <div className="w-full md:w-[340px] lg:w-[400px] border-r border-gray-300 h-[320px] md:h-full overflow-y-auto bg-white">
-      <div className="p-4">
+      <div className="pl-1 pr-4 pt-4 pb-4">
         {/* Top logos */}
         <div className="flex items-center gap-2 mb-4">
           <img src={ChattiesLogo} alt="Chatties" className="w-24 h-6 " />
@@ -59,7 +59,7 @@ function Sidebar({ onSelectContact, readContacts = [] }) {
             <input
               type="text"
               placeholder="Search people, contacts..."
-              className="flex-1 bg-white outline-none text-lg text-gray-700 py-1 "
+              className="flex-1 bg-white outline-none text-lg py-1 text-slate-900 placeholder:text-slate-500"
             />
           </div>
           <img src={CreateNewChat} alt="Create New Chat" className="w-7 h-7 object-contain ml-3 cursor-pointer" />
@@ -67,7 +67,7 @@ function Sidebar({ onSelectContact, readContacts = [] }) {
         
 
      
-        {loading && <div>Loading contacts...</div>}
+        {loading && <div className="text-slate-500">Loading contacts...</div>}
         {error && <div className="text-red-500">{error}</div>}
         <ContactList
           contacts={contacts}
