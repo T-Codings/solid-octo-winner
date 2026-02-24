@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import Sidebar from "./Sidebar";
 import ChatArea from "./ChatArea";
 import { useNavigate } from "react-router-dom";
+import { GitCommit } from "lucide-react";
 
 function ChatApp() {
   const [selectedContact, setSelectedContact] = useState(null);
@@ -32,3 +33,11 @@ function ChatApp() {
 }
 
 export default ChatApp;
+
+
+
+
+
+
+
+

@@ -3,7 +3,8 @@ import React, { useMemo, useRef, useState } from "react";
 import sentSound from "../assets/sent.mp3";
 import receivedSound from "../assets/received.mp3";
 import AllIcon from "../assets/all.png";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { collection, query, where, onSnapshot, addDoc, serverTimestamp, orderBy } from "firebase/firestore";
+import { db } from "../firebaseConfig";
 
 // make sure these exist in your project:
 import ChatHeader from "./ChatHeader";
@@ -61,7 +62,8 @@ export default function ChatArea({
     const messagesRef = collection(db, "messages");
     const q = query(
       messagesRef,
-      where("chatId", "==", selectedContact.id || selectedContact.uid)
+      where("chatId", "==", selectedContact.id || selectedContact.uid),
+      orderBy("createdAt", "asc")
     );
     const unsub = onSnapshot(q, (snap) => {
       const msgs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -88,11 +90,20 @@ export default function ChatArea({
     const t = String(text || "").trim();
     if (!t) return;
 
-    // your real send logic goes here...
-    setMessages((prev) => [...prev, { id: crypto.randomUUID(), text: t, senderId: currentUser.uid }]);
-
-    if (sentAudio.current) {
-      try { sentAudio.current.currentTime = 0; sentAudio.current.play(); } catch {}
+    // Write message to Firestore
+    try {
+      await addDoc(collection(db, "messages"), {
+        chatId: selectedContact.id || selectedContact.uid,
+        senderId: currentUser.uid,
+        text: t,
+        createdAt: serverTimestamp(),
+      });
+      if (sentAudio.current) {
+        try { sentAudio.current.currentTime = 0; sentAudio.current.play(); } catch {}
+      }
+    } catch (err) {
+      // Optionally handle error
+      console.error("Failed to send message", err);
     }
   };
 
