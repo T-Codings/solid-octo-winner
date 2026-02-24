@@ -18,12 +18,33 @@ function App() {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-900">
         <div className="flex flex-col items-center">
-          <span className="w-10 h-10 mb-2 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin"></span>
-          <span className="text-emerald-300 font-semibold text-lg">Loading ...</span>
+          <span className="w-12 h-12 mb-4 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin animate-glow"></span>
+          <span className="text-emerald-300 font-semibold text-2xl animate-fadeIn">Loading ...</span>
+          <span className="mt-2 text-sm text-emerald-200 animate-fadeIn">Preparing your app</span>
         </div>
       </div>
     );
   }
+    const [minLoading, setMinLoading] = React.useState(true);
+
+    React.useEffect(() => {
+      if (!loading) {
+        const timer = setTimeout(() => setMinLoading(false), 2000);
+        return () => clearTimeout(timer);
+      }
+    }, [loading]);
+
+    if (loading || minLoading) {
+      return (
+        <div className="flex items-center justify-center h-screen bg-gray-900">
+          <div className="flex flex-col items-center">
+            <span className="w-12 h-12 mb-4 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin animate-glow"></span>
+            <span className="text-emerald-300 font-semibold text-2xl animate-fadeIn">Loading ...</span>
+            <span className="mt-2 text-sm text-emerald-200 animate-fadeIn">Preparing your app</span>
+          </div>
+        </div>
+      );
+    }
 
   const goAfterAuth = userData?.profileComplete ? "/contacts" : "/profile";
 

@@ -7,12 +7,14 @@ function ChatApp() {
   const [typingUser, setTypingUser] = useState("");
 
   return (
-    <div className="flex h-screen">
+    <div className="flex flex-col md:flex-row h-screen md:h-[calc(100vh-64px)] bg-gray-100">
       {/* Sidebar with contact selection */}
       <Sidebar onSelectContact={setSelectedContact} />
 
       {/* Chat area for selected contact */}
-      <ChatArea selectedContact={selectedContact} setTypingUser={setTypingUser} />
+      <div className="flex-1 min-w-0">
+        <ChatArea selectedContact={selectedContact} setTypingUser={setTypingUser} />
+      </div>
     </div>
   );
 }

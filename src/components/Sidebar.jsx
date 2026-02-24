@@ -40,7 +40,7 @@ function Sidebar({ onSelectContact, readContacts = [] }) {
   }, [currentUser]);
 
   return (
-    <div className="w-[340px] border-r border-gray-300 h-screen overflow-y-auto bg-white">
+    <div className="w-full md:w-[340px] lg:w-[400px] border-r border-gray-300 h-[320px] md:h-full overflow-y-auto bg-white">
       <div className="p-4">
         <h2 className="text-lg font-bold mb-4">Contacts</h2>
         {loading && <div>Loading contacts...</div>}
