@@ -1,3 +1,8 @@
+import { doc, setDoc, getDoc } from "firebase/firestore";
+// Utility to build chatId from two UIDs
+function buildChatId(uidA, uidB) {
+  return [uidA, uidB].sort().join('_');
+}
 // src/components/ChatArea.jsx
 import React, { useMemo, useRef, useState } from "react";
 import sentSound from "../assets/sent.mp3";
@@ -52,19 +57,16 @@ export default function ChatArea({
   const [sending, setSending] = useState(false);
   const [otherTyping, setOtherTyping] = useState(false);
 
-  // Fetch messages for selected contact
+  // Fetch messages for selected contact (from /chats/{chatId}/messages)
   React.useEffect(() => {
     if (!selectedContact || !currentUser) {
       setMessages([]);
       return;
     }
     setLoading(true);
-    const messagesRef = collection(db, "messages");
-    const q = query(
-      messagesRef,
-      where("chatId", "==", selectedContact.id || selectedContact.uid),
-      orderBy("createdAt", "asc")
-    );
+    const chatId = buildChatId(currentUser.uid, selectedContact.uid || selectedContact.id);
+    const messagesRef = collection(db, "chats", chatId, "messages");
+    const q = query(messagesRef, orderBy("createdAt", "asc"));
     const unsub = onSnapshot(q, (snap) => {
       const msgs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       setMessages(msgs);
@@ -90,20 +92,27 @@ export default function ChatArea({
     const t = String(text || "").trim();
     if (!t) return;
 
-    // Write message to Firestore
-    try {
-      await addDoc(collection(db, "messages"), {
-        chatId: selectedContact.id || selectedContact.uid,
-        senderId: currentUser.uid,
-        text: t,
+    const chatId = buildChatId(currentUser.uid, selectedContact.uid || selectedContact.id);
+
+    // Ensure chat doc exists
+    const chatRef = doc(db, "chats", chatId);
+    const chatSnap = await getDoc(chatRef);
+    if (!chatSnap.exists()) {
+      await setDoc(chatRef, {
+        members: [currentUser.uid, selectedContact.uid || selectedContact.id],
         createdAt: serverTimestamp(),
       });
-      if (sentAudio.current) {
-        try { sentAudio.current.currentTime = 0; sentAudio.current.play(); } catch {}
-      }
-    } catch (err) {
-      // Optionally handle error
-      console.error("Failed to send message", err);
+    }
+
+    // Add message to subcollection
+    await addDoc(collection(db, "chats", chatId, "messages"), {
+      senderId: currentUser.uid,
+      text: t,
+      createdAt: serverTimestamp(),
+    });
+
+    if (sentAudio.current) {
+      try { sentAudio.current.currentTime = 0; sentAudio.current.play(); } catch {}
     }
   };
 
