@@ -9,6 +9,9 @@ import MingcuteChat from "../assets/mingcutechat.png";
 import CreateNewChat from "../assets/Createnewchat.png";
 import {SearchIcon} from "lucide-react";
 
+
+import { doc, updateDoc } from "firebase/firestore";
+
 function Sidebar({ onSelectContact, readContacts = [] }) {
   const { currentUser } = useAuth();
   const [contacts, setContacts] = useState([]);
@@ -24,11 +27,9 @@ function Sidebar({ onSelectContact, readContacts = [] }) {
       let updated = false;
       const rows = snap.docs.map((d) => {
         const data = { id: d.id, ...d.data() };
-        // Optionally, you can check for changes here and set updated = true if needed
         return data;
       });
       setContacts((prev) => {
-        // If the new rows are different from previous, update
         if (JSON.stringify(prev) !== JSON.stringify(rows)) {
           updated = true;
           return rows;
@@ -42,6 +43,19 @@ function Sidebar({ onSelectContact, readContacts = [] }) {
     });
     return () => unsub();
   }, [currentUser]);
+
+  // Pin/unpin handler
+  const onTogglePin = async (contact) => {
+    if (!currentUser || !contact?.id) return;
+    try {
+      await updateDoc(
+        doc(db, "contacts", currentUser.uid, "list", contact.id),
+        { isPinned: !contact.isPinned }
+      );
+    } catch (e) {
+      setError("Failed to update pin status.");
+    }
+  };
 
   return (
     <div className="w-full md:w-[340px] lg:w-[400px] border-r border-gray-300 h-[320px] md:h-full overflow-y-auto bg-white">
@@ -64,14 +78,13 @@ function Sidebar({ onSelectContact, readContacts = [] }) {
           </div>
           <img src={CreateNewChat} alt="Create New Chat" className="w-7 h-7 object-contain ml-3 cursor-pointer" />
         </div>
-        
 
-     
         {loading && <div className="text-slate-500">Loading contacts...</div>}
         {error && <div className="text-red-500">{error}</div>}
         <ContactList
           contacts={contacts}
           onSelectContact={onSelectContact}
+          onTogglePin={onTogglePin}
           readContacts={readContacts}
         />
       </div>

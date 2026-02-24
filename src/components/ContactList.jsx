@@ -84,10 +84,6 @@ function ContactRow({ c, idx, onSelectContact, onOpenMenu }) {
             e.currentTarget.src = Avatar;
           }}
         />
-        <span
-          className={`absolute bottom-1 right-1 w-3 h-3 rounded-full border-2 border-white ${isOnline ? "bg-emerald-400" : "bg-gray-400"}`}
-          title={isOnline ? "Online" : "Offline"}
-        />
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
@@ -278,10 +274,10 @@ export default function ContactList({ contacts = [], onSelectContact, onTogglePi
                 onTogglePin?.(menu.contact);
                 setMenu(null);
               }}
-              className="w-full px-4 py-3 text-left text-sm font-semibold hover:bg-gray-50 flex items-center justify-between"
+              className="w-full px-3 py-3 flex items-center justify-center hover:bg-gray-50"
+              title={menu.contact?.isPinned ? "Unpin chat" : "Pin chat"}
             >
-              {menu.contact?.isPinned ? "" : ""}
-              <img src={PinnedIcon} alt="pin" className="w-4 h-4 opacity-80" />
+              <img src={PinnedIcon} alt={menu.contact?.isPinned ? "Unpin" : "Pin"} className="w-5 h-5 opacity-80" />
             </button>
           </div>
         </div>
