@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebaseConfig";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -18,6 +20,7 @@ export function useAuth() {
 // Provider component
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
+  const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -56,8 +59,19 @@ export function AuthProvider({ children }) {
 
   // Track user state
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user || null);
+      if (user) {
+        // Fetch user profile data
+        try {
+          const snap = await getDoc(doc(db, "users", user.uid));
+          setUserData(snap.exists() ? snap.data() : null);
+        } catch {
+          setUserData(null);
+        }
+      } else {
+        setUserData(null);
+      }
       setLoading(false);
     });
     return () => unsub();
@@ -65,6 +79,7 @@ export function AuthProvider({ children }) {
 
   const value = {
     currentUser,
+    userData,
     logout,
     signup,
     login,
